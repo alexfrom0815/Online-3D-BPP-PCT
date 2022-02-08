@@ -29,7 +29,7 @@ url={https://openreview.net/forum?id=bfuGjlCwAq}
 * Python>=3.7
 * NumPy
 * [PyTorch](http://pytorch.org/)>=1.7
-
+* gym
 
 ## Quick start
 
