@@ -1,5 +1,7 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
+This project is being continuously updated, please stay tuned！
+
 We propose to enhance the practical applicability of online 3D-BPP via learning on a hierarchical packing configuration tree which makes the DRL model easy to deal with practical constraints and well-performing even with continuous solution space.
 
 ![PCT](images/packingtree2D.png)
