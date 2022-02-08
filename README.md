@@ -2,7 +2,7 @@
 
 **This project is being continuously updated, please stay tuned！**
 
-Any code contribution is welcome!  **We are also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
+Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
 We propose to enhance the practical applicability of online 3D-BPP via learning on a hierarchical packing configuration tree which makes the DRL model easy to deal with practical constraints and well-performing even with continuous solution space.
 
