@@ -76,6 +76,11 @@ python evaluation.py --evaluate --load-model --model-path path/to/your/model --l
 python main.py -h
 ```
 
+### License
+```
+This source code is released only for academic use. Please do not use it for commercial purpose without authorization of the author.
+```
+
 ### TODO (This code will be fully published by March 2022)
 ```
 1. Add heuristic baseline algorithm.
