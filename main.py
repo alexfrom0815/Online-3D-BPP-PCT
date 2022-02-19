@@ -1,4 +1,5 @@
 import sys
+import torch.cuda
 if '/opt/ros/kinetic/lib/python2.7/dist-packages' in sys.path:
     sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import time
@@ -14,7 +15,13 @@ from tools import get_args, registration_envs
 def main(args):
 
     custom = input('Please input the experiment name\n')
-    torch.cuda.set_device(args.device)
+
+    if args.no_cuda:
+        device = torch.device('cpu')
+    else:
+        device = torch.device('cuda', args.device)
+        torch.cuda.set_device(args.device)
+
     torch.set_num_threads(1)
     torch.backends.cudnn.deterministic = True
 
@@ -31,17 +38,16 @@ def main(args):
     writer = SummaryWriter(logdir=log_writer_path)
 
     envs = make_vec_envs(args, './logs/runinfo', True)
-    # envs = make_vec_envs(args.id, args.seed, args.num_processes, args.gamma, './logs/runinfo', args.device, True)
 
     PCT_policy =  DRL_GAT(args)
-    PCT_policy =  PCT_policy.cuda()
+    PCT_policy =  PCT_policy.to(device)
 
     if args.load_model:
         PCT_policy = load_policy(args.model_path, PCT_policy)
         print('Loading pre-train model', args.model_path)
 
     trainTool = train_tools(writer, timeStr, PCT_policy, args)
-    trainTool.train_n_steps(envs, args)
+    trainTool.train_n_steps(envs, args, device)
 
 if __name__ == '__main__':
     registration_envs()

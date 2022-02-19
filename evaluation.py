@@ -10,6 +10,12 @@ import gym
 def main(args):
     custom = input('Please input the evaluate name\n')
 
+    if args.no_cuda:
+        device = torch.device('cpu')
+    else:
+        device = torch.device('cuda', args.device)
+        torch.cuda.set_device(args.device)
+
     torch.cuda.set_device(args.device)
     torch.set_num_threads(1)
     torch.manual_seed(args.seed)
@@ -25,7 +31,7 @@ def main(args):
                     leaf_node_holder=args.leaf_node_holder,
                     shuffle=args.shuffle)
     PCT_policy =  DRL_GAT(args)
-    PCT_policy =  PCT_policy.cuda()
+    PCT_policy =  PCT_policy.to(device)
 
     if args.load_model:
         PCT_policy = load_policy(args.model_path, PCT_policy)
@@ -33,7 +39,7 @@ def main(args):
 
     timeStr = custom + '-' + time.strftime('%Y.%m.%d-%H-%M-%S', time.localtime(time.time()))
     backup(timeStr, args, None)
-    evaluate(PCT_policy, envs, timeStr, args, eval_freq=args.evaluation_episodes)
+    evaluate(PCT_policy, envs, timeStr, args, device, eval_freq=args.evaluation_episodes)
 
 if __name__ == '__main__':
     registration_envs()

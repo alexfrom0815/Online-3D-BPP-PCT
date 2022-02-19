@@ -103,7 +103,6 @@ def make_vec_envs(args,
                        container_size=args.container_size,
                        internal_node_holder = args.internal_node_holder,
                        leaf_node_holder = args.leaf_node_holder,
-                       random_den=args.random_den,
                        )
 
         spaces = [env.observation_space, env.action_space]

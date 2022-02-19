@@ -44,7 +44,6 @@ def backup(timeStr, args, upper_policy = None):
     if not os.path.exists(targetDir):
         os.makedirs(targetDir)
     copyfile('attention_model.py', os.path.join(targetDir, 'attention_model.py'))
-    # copyfile('config.py',  os.path.join(targetDir, 'config.py'))
     copyfile('distributions.py',    os.path.join(targetDir, 'distributions.py'))
     copyfile('envs.py',    os.path.join(targetDir, 'envs.py'))
     copyfile('evaluation.py', os.path.join(targetDir, 'evaluation.py'))
@@ -60,7 +59,6 @@ def backup(timeStr, args, upper_policy = None):
 
     gymPath = './pct_envs'
     envName = args.id.split('-v')
-    # envName = envName[0].lower() + envName[1]
     envName = envName[0] + envName[1]
     envPath = os.path.join(gymPath, envName)
     copytree(envPath, os.path.join(targetDir, envName))
@@ -115,11 +113,13 @@ def get_args():
     parser.add_argument('--id', type=str, default='PctDiscrete-v0', help='Experiment ID, discrete or continuous verision')
     parser.add_argument('--setting', type=int, default=2, help='Experiment ID')
     parser.add_argument('--internal-node-holder', type=int, default=80, help='Maximum number of internal nodes')
-    parser.add_argument('--leaf_node_holder', type=int, default=50, help='Maximum number of leaf nodes')
+    parser.add_argument('--leaf-node-holder', type=int, default=50, help='Maximum number of leaf nodes')
     parser.add_argument('--shuffle',type=bool, default=True, help='Randomly shuffle the leaf nodes')
 
-    parser.add_argument('--seed', type=int, default=4, help='Random seed')
+
+    parser.add_argument('--no-cuda',action='store_true', help='Forbidden cuda')
     parser.add_argument('--device', type=int, default=0, help='Which GPU card will be called')
+    parser.add_argument('--seed', type=int, default=4, help='Random seed')
 
     parser.add_argument('--use-acktr', type=bool, default=True, help='Use acktr, otherwise a2c')
     parser.add_argument('--num-processes', type=int, default=64, help='How many parallel processes will be invoked for training')

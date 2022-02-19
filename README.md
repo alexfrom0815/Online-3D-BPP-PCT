@@ -1,6 +1,6 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
-**This repository is being continuously updated, please stay tuned！**
+**This repository is being continuously updated, please stay tuned！** The last update: 19/2/2022
 
 Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 

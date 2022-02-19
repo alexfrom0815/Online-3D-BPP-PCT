@@ -4,11 +4,11 @@ import torch
 import tools
 
 
-def evaluate(PCT_policy, eval_envs, timeStr, args, eval_freq = 100, factor = 1):
+def evaluate(PCT_policy, eval_envs, timeStr, args, device, eval_freq = 100, factor = 1):
     """Constructs the main actor & critic networks, and performs all training."""
     PCT_policy.eval()
     obs = eval_envs.reset()
-    obs = torch.FloatTensor(obs).cuda().unsqueeze(dim=0)
+    obs = torch.FloatTensor(obs).to(device).unsqueeze(dim=0)
     all_nodes, leaf_nodes = tools.get_leaf_nodes_with_factor(obs, 1 / factor, args.num_processes,
                                                              args.internal_node_holder, args.leaf_node_holder)
     batchX = torch.arange(args.num_processes)
@@ -64,10 +64,10 @@ def evaluate(PCT_policy, eval_envs, timeStr, args, eval_freq = 100, factor = 1):
             obs = eval_envs.reset()
             inner_counter = 0
 
-        obs = torch.FloatTensor(obs).cuda().unsqueeze(dim=0)
+        obs = torch.FloatTensor(obs).to(device).unsqueeze(dim=0)
         all_nodes, leaf_nodes = tools.get_leaf_nodes_with_factor(obs, 1 / factor, args.num_processes,
                                                                  args.internal_node_holder, args.leaf_node_holder)
-        all_nodes, leaf_nodes = all_nodes.cuda(), leaf_nodes.cuda()
+        all_nodes, leaf_nodes = all_nodes.to(device), leaf_nodes.to(device)
 
     result = "Evaluation using {} episodes\n" \
              "Mean ratio {:.5f}, mean length{:.5f}\n".format(len(episode_ratio), np.mean(episode_ratio), np.mean(episode_length))

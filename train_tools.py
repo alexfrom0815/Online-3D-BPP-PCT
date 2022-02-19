@@ -31,7 +31,7 @@ class train_tools(object):
             np.random.seed(seed)
             random.seed(seed)
 
-    def train_n_steps(self, envs, args):
+    def train_n_steps(self, envs, args, device):
         """Constructs the main actor & critic networks, and performs all training."""
         model_save_path = os.path.join(args.model_save_path, self.timeStr)
         sub_time_str = time.strftime('%Y.%m.%d-%H-%M-%S', time.localtime(time.time()))
@@ -45,7 +45,7 @@ class train_tools(object):
                                         obs_shape=all_nodes.shape[1:],
                                         gamma = args.gamma)
 
-        pct_rollout.cuda()
+        pct_rollout.to(device)
         start = time.time()
         ratio_recorder = 0
         episode_rewards = deque(maxlen=10)
@@ -64,7 +64,7 @@ class train_tools(object):
                 selected_leaf_node = leaf_nodes[batchX,selectedIdx.squeeze()]
                 obs, reward, done, infos = envs.step(selected_leaf_node.cpu().numpy())
                 all_nodes, leaf_nodes = tools.get_leaf_nodes(obs, args.internal_node_holder, args.leaf_node_holder)
-                all_nodes, leaf_nodes = all_nodes.cuda(), leaf_nodes.cuda()
+                all_nodes, leaf_nodes = all_nodes.to(device), leaf_nodes.to(device)
                 pct_rollout.insert(all_nodes, selectedIdx, selectedlogProb, reward, torch.tensor(1-done).unsqueeze(1))
 
             for _ in range(len(infos)):
@@ -104,7 +104,7 @@ class train_tools(object):
 
                 value_noise = torch.randn(leaf_node_value.size())
                 if leaf_node_value.is_cuda:
-                    value_noise = value_noise.cuda()
+                    value_noise = value_noise.to(device)
 
                 sample_values = leaf_node_value + value_noise
                 vf_fisher_loss = -(leaf_node_value - sample_values.detach()).pow(2).mean()
