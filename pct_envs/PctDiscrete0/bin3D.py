@@ -23,6 +23,9 @@ class PackingDiscrete(gym.Env):
         self.size_minimum = np.min(np.array(item_set))
         self.space = Space(*self.bin_size, self.size_minimum, self.internal_node_holder)
         self.setting = setting
+        self.item_set = item_set
+        if self.setting == 2: self.orientation = 6
+        else: self.orientation = 2
 
         if not load_test_data:
             assert item_set is not None
@@ -66,7 +69,7 @@ class PackingDiscrete(gym.Env):
         self.next_box = self.gen_next_box()
         
         if self.test:
-            if self.setting < 3: self.next_den = self.next_box[3]
+            if self.setting == 3: self.next_den = self.next_box[3]
             else: self.next_den = 1
             self.next_box = [int(self.next_box[0]), int(self.next_box[1]), int(self.next_box[2])]
         else:
@@ -130,7 +133,9 @@ class PackingDiscrete(gym.Env):
         return action, next_box
 
     def step(self, action):
-        action, next_box = self.LeafNode2Action(action)
+        if len(action) != 3: action, next_box = self.LeafNode2Action(action)
+        else: next_box = self.next_box
+
         idx = [action[1], action[2]]
         bin_index = 0
         rotation_flag = action[0]

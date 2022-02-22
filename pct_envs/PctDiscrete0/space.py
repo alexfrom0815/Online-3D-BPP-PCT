@@ -365,13 +365,6 @@ class Space(object):
         assert ratio <= 1.0
         return ratio
 
-    def get_ratio_vary(self, h):
-        vo = reduce(lambda x, y: x + y, [box.x * box.y * box.z for box in self.boxes], 0.0)
-        mx = self.plain_size[0] * self.plain_size[1] * h
-        ratio = vo / mx
-        assert ratio <= 1.0
-        return ratio
-
     def idx_to_position(self, idx):
         lx = idx // self.plain_size[0]
         ly = idx % self.plain_size[0]
@@ -434,7 +427,7 @@ class Space(object):
             return True
         return False
 
-    def drop_box_virtual(self, box_size, idx, flag, density, setting):
+    def drop_box_virtual(self, box_size, idx, flag, density, setting,  returnH = False, returnMap = False):
         if not flag:
             x, y, z = box_size
         else:
@@ -469,9 +462,15 @@ class Space(object):
             if len(combine_contact_points) > 0:
                 box_now.bottom_whole_contact_area = self.scale_down(ConvexHull(combine_contact_points))
 
-        return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True)
+        if returnH:
+            return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True), max_h
+        elif returnMap:
+            return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True), self.update_height_graph(self.plain, box_now)
+        else:
+            return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True)
 
     def check_box(self, x, y, lx, ly, z, max_h, box_now, setting, virtual=False):
+        assert isinstance(setting, int)
         if lx + x > self.plain_size[0] or ly + y > self.plain_size[1]:
             return False
         if lx < 0 or ly < 0:
