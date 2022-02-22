@@ -1,6 +1,6 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
-**This repository is being continuously updated, please stay tuned！** The last update: 19/2/2022
+**This repository is being continuously updated, please stay tuned！** The last update: 22/2/2022 (Heuristic baseline algorithm added!)
 
 Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
@@ -41,7 +41,7 @@ The training data is generated on the fly.
 
 ## Usage
 
-### Data
+### Data description
 
 Describe your 3D container size and 3D item size in 'givenData.py'
 ```
@@ -49,12 +49,14 @@ For discrete settings:
 container_size: A vector of length 3 describing the size of the container in the x, y, z dimension.
 item_size_set:  A list records the size of each item. The size of each item is also described by a vector of length 3.
 ```
+### Dataset
+You can download the prepared dataset from [here](https://drive.google.com/drive/folders/1QLaLLnpVySt_nNv0c6YetriHh0Ni-yXY):
 
 ### Training
 
 For training online 3D BPP instances on setting 1 (80 internal nodes and 50 leaf nodes) nodes:
 ```bash
-python main.py --setting 1 --internal-node-holder 80 --leaf_node_holder 50
+python main.py --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
 
 #### Warm start
@@ -68,12 +70,15 @@ To evaluate a model, you can add the `--evaluate` flag to `evaluation.py`:
 ```bash
 python evaluation.py --evaluate --load-model --model-path path/to/your/model --load-dataset --dataset-path path/to/your/dataset
 ```
-
-
-
+### Evaluation
+To evaluate a model, you can add the `--evaluate` flag to `evaluation.py`:
+```bash
+python heuristic.py --evaluate --load-dataset  --dataset-path path/to/your/dataset
+```
 ### Help
 ```bash
 python main.py -h
+python heuristic.py -h
 ```
 
 ### License
@@ -83,10 +88,9 @@ This source code is released only for academic use. Please do not use it for com
 
 ### TODO (This code will be fully published by March 2022)
 ```
-1. Add heuristic baseline algorithm.
-2. Add online 3D BPP environment under continuous domain. 
-3. Add more user documentation and notes.
-4. Add dataset and pretrained model.
-5. Add other leaf node expansion schemes.
-6. Feedback of various bugs is welcome.
+1. Add online 3D BPP environment under continuous domain. 
+2. Add more user documentation and notes.
+3. Add dataset and pretrained model.
+4. Add other leaf node expansion schemes.
+5. Feedback of various bugs is welcome.
 ```
