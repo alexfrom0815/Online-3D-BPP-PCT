@@ -162,6 +162,34 @@ def get_args():
 
     return args
 
+def get_args_heuristic():
+    parser = argparse.ArgumentParser(description='PCT arguments')
+    parser.add_argument('--setting', type=int, default=3, help='Experiment ID')
+    parser.add_argument('--evaluate', action='store_true', help='Evaluate only')
+    parser.add_argument('--evaluation-episodes', type=int, default=10, metavar='N', help='Number of evaluation episodes to average over')
+    parser.add_argument('--load-dataset', action='store_true', help='Load an existing dataset, otherwise the data is generated on the fly')
+    parser.add_argument('--dataset-path', type=str, help='The path to load dataset')
+
+    parser.add_argument('--heuristic', type=str, default='BR', help='LSAH DBL MACS OnlineBPH HM BR RANDOM')
+
+    args = parser.parse_args()
+
+    args.container_size = givenData.container_size
+    args.item_size_set  = givenData.item_size_set
+
+    if args.setting == 1:
+        args.internal_node_length = 6
+    elif args.setting == 2:
+        args.internal_node_length = 6
+    elif args.setting == 3:
+        args.internal_node_length = 7
+    if args.evaluate:
+        args.num_processes = 1
+
+    return args
+
+
+
 def registration_envs():
     register(
         id='PctDiscrete-v0',                                  # Format should be xxx-v0, xxx-v1
