@@ -1,6 +1,8 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
-**This repository is being continuously updated, please stay tuned！** The last update: 22/2/2022 (Heuristic baseline algorithm added!)
+**This repository is being continuously updated, please stay tuned！** 
+
+The last update: 22/2/2022 (Heuristic baseline algorithm added!)
 
 Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
@@ -70,11 +72,13 @@ To evaluate a model, you can add the `--evaluate` flag to `evaluation.py`:
 ```bash
 python evaluation.py --evaluate --load-model --model-path path/to/your/model --load-dataset --dataset-path path/to/your/dataset
 ```
-### Evaluation
-To evaluate a model, you can add the `--evaluate` flag to `evaluation.py`:
+### Heuristic
+Running heuristic.py for test heuristic baselines, the source of the heuristic algorithm has been marked in the code:
 ```bash
-python heuristic.py --evaluate --load-dataset  --dataset-path path/to/your/dataset
+Running heuristic on setting 1 with LASH method:
+python heuristic.py --setting 1 --heuristic LSAH --evaluate --load-dataset  --dataset-path path/to/your/dataset
 ```
+
 ### Help
 ```bash
 python main.py -h
