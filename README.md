@@ -102,7 +102,7 @@ This source code is released only for academic use. Please do not use it for com
 ### TODO (This code will be fully published by March 2022)
 ```
 1. Add more user documentation and notes.
-2. Add dataset and pretrained model.
+2. Add pretrained model.
 3. Add other leaf node expansion schemes.
 4. Feedback of various bugs is welcome.
 ```
