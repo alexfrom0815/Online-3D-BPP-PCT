@@ -42,6 +42,9 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets, args):
                            internal_node_holder = args.internal_node_holder,
                            leaf_node_holder = args.leaf_node_holder,
                            shuffle = args.shuffle,
+                           sample_from_distribution = args.sample_from_distribution,
+                           sample_left_bound = args.sample_left_bound,
+                           sample_right_bound = args.sample_right_bound
                            )
 
         is_atari = hasattr(gym.envs, 'atari') and isinstance(

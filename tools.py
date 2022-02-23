@@ -145,6 +145,12 @@ def get_args():
     parser.add_argument('--load-dataset', action='store_true', help='Load an existing dataset, otherwise the data is generated on the fly')
     parser.add_argument('--dataset-path', type=str, help='The path to load dataset')
 
+    parser.add_argument('--sample-from-distribution', action='store_true', help='Sample continuous item size from a uniform distribution U(a,b), otherwise sample items from \'item_size_set\' in \'givenData.py\'.')
+    parser.add_argument('--sample-left-bound', type=float, metavar='a', help='The parametre a of distribution U(a,b)')
+    parser.add_argument('--sample-right-bound', type=float, metavar='b', help='The parametre b of distribution U(a,b)')
+
+
+
     args = parser.parse_args()
 
     args.container_size = givenData.container_size
