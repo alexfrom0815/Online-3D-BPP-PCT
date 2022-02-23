@@ -62,7 +62,7 @@ For training online 3D BPP instances on setting 1 (80 internal nodes and 50 leaf
 ```bash
 python main.py --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
-If you want to train a model works on continuous domain, add '--continuous'：
+If you want to train a model works on **continuous** domain, add '--continuous':
 ```bash
 python main.py --continuous --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
@@ -84,7 +84,7 @@ Running heuristic on setting 1 （discrete） with LASH method:
 python heuristic.py --setting 1 --heuristic LSAH --evaluate --load-dataset  --dataset-path setting123_discrete.pt
 
 Running heuristic on setting 2 （continuous） with OnlineBPH method:
-python heuristic.py --setting 2 --heuristic OnlineBPH --evaluate --load-dataset  --dataset-path setting2_continuous.pt
+python heuristic.py --continuous --setting 2 --heuristic OnlineBPH --evaluate --load-dataset  --dataset-path setting2_continuous.pt
 ```
 
 ### Help
