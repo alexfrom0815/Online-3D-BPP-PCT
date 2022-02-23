@@ -1,6 +1,6 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
-**This repository is being continuously updated, please stay tuned！** 
+**This repository is being continuously updated, please stay tuned!** 
 
 Update: 22/2/2022 (Heuristic baseline algorithm added!)
 
@@ -41,7 +41,7 @@ For training online 3D-BPP on setting 2 (mentioned in our paper) with our PCT me
 ```bash
 python main.py 
 ```
-The training data is generated on the fly.
+The training data is generated on the fly. The training logs (tensorboard) are saved in './logs/runs'. Related file backups are saved in './logs/experiment'.
 
 ## Usage
 
