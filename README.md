@@ -2,7 +2,9 @@
 
 **This repository is being continuously updated, please stay tuned！** 
 
-The last update: 22/2/2022 (Heuristic baseline algorithm added!)
+Update: 22/2/2022 (Heuristic baseline algorithm added!)
+
+Update: 23/2/2022 (Continous enviroment and algorithms added!)
 
 Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
@@ -60,7 +62,10 @@ For training online 3D BPP instances on setting 1 (80 internal nodes and 50 leaf
 ```bash
 python main.py --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
-
+If you want to train a model works on continuous domain, add '--continuous'：
+```bash
+python main.py --continuous --setting 1 --internal-node-holder 80 --leaf-node-holder 50
+```
 #### Warm start
 You can initialize a run using a pretrained model:
 ```bash
@@ -74,14 +79,18 @@ python evaluation.py --evaluate --load-model --model-path path/to/your/model --l
 ```
 ### Heuristic
 Running heuristic.py for test heuristic baselines, the source of the heuristic algorithm has been marked in the code:
-```bash
-Running heuristic on setting 1 with LASH method:
-python heuristic.py --setting 1 --heuristic LSAH --evaluate --load-dataset  --dataset-path path/to/your/dataset
+```
+Running heuristic on setting 1 （discrete） with LASH method:
+python heuristic.py --setting 1 --heuristic LSAH --evaluate --load-dataset  --dataset-path setting123_discrete.pt
+
+Running heuristic on setting 2 （continuous） with OnlineBPH method:
+python heuristic.py --setting 2 --heuristic OnlineBPH --evaluate --load-dataset  --dataset-path setting2_continuous.pt
 ```
 
 ### Help
 ```bash
 python main.py -h
+python evaluation.py -h
 python heuristic.py -h
 ```
 
@@ -92,9 +101,8 @@ This source code is released only for academic use. Please do not use it for com
 
 ### TODO (This code will be fully published by March 2022)
 ```
-1. Add online 3D BPP environment under continuous domain. 
-2. Add more user documentation and notes.
-3. Add dataset and pretrained model.
-4. Add other leaf node expansion schemes.
-5. Feedback of various bugs is welcome.
+1. Add more user documentation and notes.
+2. Add dataset and pretrained model.
+3. Add other leaf node expansion schemes.
+4. Feedback of various bugs is welcome.
 ```

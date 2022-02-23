@@ -110,12 +110,12 @@ def load_policy(load_path, upper_policy):
 
 def get_args():
     parser = argparse.ArgumentParser(description='PCT arguments')
-    parser.add_argument('--id', type=str, default='PctDiscrete-v0', help='Experiment ID, discrete or continuous verision')
+    # parser.add_argument('--id', type=str, default='PctDiscrete-v0', help='Experiment ID, discrete or continuous verision')
     parser.add_argument('--setting', type=int, default=2, help='Experiment ID')
     parser.add_argument('--internal-node-holder', type=int, default=80, help='Maximum number of internal nodes')
     parser.add_argument('--leaf-node-holder', type=int, default=50, help='Maximum number of leaf nodes')
     parser.add_argument('--shuffle',type=bool, default=True, help='Randomly shuffle the leaf nodes')
-
+    parser.add_argument('--continuous', action='store_true', help='Use continuous enviroment, otherwise the enviroment is discrete')
 
     parser.add_argument('--no-cuda',action='store_true', help='Forbidden cuda')
     parser.add_argument('--device', type=int, default=0, help='Which GPU card will be called')
@@ -150,6 +150,11 @@ def get_args():
     args.container_size = givenData.container_size
     args.item_size_set  = givenData.item_size_set
 
+    if args.continuous:
+        args.id = 'PctContinuous-v0'
+    else:
+        args.id = 'PctDiscrete-v0'
+
     if args.setting == 1:
         args.internal_node_length = 6
     elif args.setting == 2:
@@ -164,18 +169,24 @@ def get_args():
 
 def get_args_heuristic():
     parser = argparse.ArgumentParser(description='PCT arguments')
+    parser.add_argument('--continuous', action='store_true', help='Use continuous enviroment, otherwise the enviroment is discrete')
+
     parser.add_argument('--setting', type=int, default=3, help='Experiment ID')
     parser.add_argument('--evaluate', action='store_true', help='Evaluate only')
     parser.add_argument('--evaluation-episodes', type=int, default=10, metavar='N', help='Number of evaluation episodes to average over')
     parser.add_argument('--load-dataset', action='store_true', help='Load an existing dataset, otherwise the data is generated on the fly')
     parser.add_argument('--dataset-path', type=str, help='The path to load dataset')
 
-    parser.add_argument('--heuristic', type=str, default='BR', help='LSAH DBL MACS OnlineBPH HM BR RANDOM')
+    parser.add_argument('--heuristic', type=str, default='LSAH', help='LSAH DBL MACS OnlineBPH HM BR RANDOM')
+
 
     args = parser.parse_args()
 
     args.container_size = givenData.container_size
     args.item_size_set  = givenData.item_size_set
+
+    if args.continuous:
+        assert args.heuristic == 'LSAH' or args.heuristic == 'OnlineBPH' or args.heuristic == 'BR'
 
     if args.setting == 1:
         args.internal_node_length = 6
@@ -187,8 +198,6 @@ def get_args_heuristic():
         args.num_processes = 1
 
     return args
-
-
 
 def registration_envs():
     register(

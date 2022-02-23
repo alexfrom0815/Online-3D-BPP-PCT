@@ -1,6 +1,7 @@
 import givenData
 import numpy as np
 from pct_envs.PctDiscrete0 import PackingDiscrete
+from pct_envs.PctContinuous0 import PackingContinuous
 from tools import get_args_heuristic
 
 '''
@@ -160,6 +161,8 @@ def LASH(env, times = 2000):
             next_den = env.next_den
 
             for ems in EMS:
+                if np.sum(np.abs(ems)) == 0:
+                    continue
                 for rot in range(env.orientation):
                     if rot == 0:
                         x, y, z = next_box
@@ -361,7 +364,12 @@ def OnlineBPH(env, times = 2000):
             next_den = env.next_den
             stop = False
 
+            if next_box[0] == 0.307 and next_box[1] == 0.276 and next_box[2] == 0.5:
+                print('debug')
+
             for ems in EMS:
+                if np.sum(np.abs(ems)) == 0:
+                    continue
                 for rot in range(env.orientation):
                     if rot == 0:
                         x, y, z = next_box
@@ -375,6 +383,9 @@ def OnlineBPH(env, times = 2000):
                         x, z, y = next_box
                     elif rot == 5:
                         y, z, x = next_box
+
+                    if ems[0] == 0.116 and ems[1] == 0.369 and ems[2] == 0.3:
+                        print('debug')
 
                     if env.space.drop_box_virtual([x, y, z], (ems[0], ems[1]), False, next_den, env.setting):
                         env.next_box = [x, y, z]
@@ -531,14 +542,16 @@ def BR(env, times = 2000):
 if __name__ == '__main__':
     args = get_args_heuristic()
 
-    env = PackingDiscrete(setting = args.setting,
-                           container_size = args.container_size,
-                           item_set = args.item_size_set,
-                           data_name = args.dataset_path,
-                           load_test_data = args.load_dataset,
-                           internal_node_holder = 80,
-                           leaf_node_holder = 1000
-                          )
+    if args.continuous == True: PackingEnv = PackingContinuous
+    else: PackingEnv = PackingDiscrete
+
+    env = PackingEnv(setting = args.setting,
+                     container_size = args.container_size,
+                     item_set = args.item_size_set,
+                     data_name = args.dataset_path,
+                     load_test_data = args.load_dataset,
+                     internal_node_holder = 80,
+                     leaf_node_holder = 1000)
 
     if args.heuristic == 'LSAH':
         mean, var, length = LASH(env, args.evaluation_episodes)
