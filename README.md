@@ -54,8 +54,8 @@ container_size: A vector of length 3 describing the size of the container in the
 item_size_set:  A list records the size of each item. The size of each item is also described by a vector of length 3.
 ```
 ### Dataset
-You can download the prepared dataset from [here](https://drive.google.com/drive/folders/1QLaLLnpVySt_nNv0c6YetriHh0Ni-yXY):
-
+You can download the prepared dataset from [here](https://drive.google.com/drive/folders/1QLaLLnpVySt_nNv0c6YetriHh0Ni-yXY).
+The dataset consists of 3000 randomly generated trajectories, each with 150 items. The item is a vector of length 3 or 4, the first three numbers of the item represent the size of the item, the fourth number (if any) represents the density of the item.
 ### Training
 
 For training online 3D BPP instances on setting 1 (80 internal nodes and 50 leaf nodes) nodes:
