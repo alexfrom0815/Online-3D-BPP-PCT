@@ -1,6 +1,5 @@
 import numpy as np
 from functools import reduce
-import copy
 from .convex_hull import ConvexHull, point_in_polygen
 from .PctTools import AddNewEMSZ, maintainEventBottom
 
@@ -16,10 +15,7 @@ class DownEdge(object):
         self.centre2D = None
 
 def IsUsableEMS(xlow, ylow, zlow, x1, y1, z1, x2, y2, z2):
-    xd = x2 - x1
-    yd = y2 - y1
-    zd = z2 - z1
-    if ((xd >= xlow) and (yd >= ylow) and (zd >= zlow)):
+    if ((x2 - x1 + 1e-6 >= xlow) and (y2 - y1 + 1e-6 >= ylow) and (z2 - z1 + 1e-6 >= zlow)):
         return True
     return False
 
@@ -86,8 +82,8 @@ class Box(object):
             else:
                 direct_edge = None
                 for e in self.bottom_edges:
-                    if self.thisStack.centre[0] > e.area[0] and self.thisStack.centre[0] < e.area[2] \
-                            and self.thisStack.centre[1] > e.area[1] and self.thisStack.centre[1] < e.area[3]:
+                    if self.thisStack.centre[0] - e.area[0] > 1e-6 and e.area[2] - self.thisStack.centre[0] > 1e-6  \
+                            and self.thisStack.centre[1] - e.area[1] > 1e-6 and e.area[3] - self.thisStack.centre[1] > 1e-6:
                         direct_edge = e
                         break
 
@@ -183,8 +179,8 @@ class Box(object):
             else:
                 direct_edge = None
                 for e in self.bottom_edges:
-                    if self.thisVirtualStack.centre[0] > e.area[0] and self.thisVirtualStack.centre[0] < e.area[2] \
-                            and self.thisVirtualStack.centre[1] > e.area[1] and self.thisVirtualStack.centre[1] < e.area[3]:
+                    if self.thisVirtualStack.centre[0] - e.area[0] > 1e-6 and e.area[2] - self.thisVirtualStack.centre[0] > 1e-6  \
+                            and self.thisVirtualStack.centre[1] - e.area[1] > 1e-6 and e.area[3] - self.thisVirtualStack.centre[1] > 1e-6 :
                         direct_edge = e
                         break
 
@@ -274,28 +270,24 @@ class Space(object):
         self.height = height
         self.low_bound = size_minimum
 
-        # init needed
-        self.plain = np.zeros(shape=(self.max_axis, self.max_axis), dtype=np.int32)
-        self.space_mask = np.zeros(shape=(self.max_axis, self.max_axis), dtype=np.int32)
-        self.left_space = np.zeros(shape=(self.max_axis, self.max_axis), dtype=np.int32)
+        self.upLetter = np.zeros((holder, 5))
         self.box_vec = np.zeros((holder, 9))
-        self.box_vec[0][-1] = 1
-
+        self.firstEMS = np.array([0, 0, 0, *self.plain_size])
+        self.EMS = np.zeros((300, 6))
+        self.NOEMS  = 1
         self.reset()
-        self.alleps = []
 
-        self.EMS3D = dict()
-        self.EMS3D[0] = np.array([0, 0, 0, width, length, height, self.serial_number])
 
     def reset(self):
-        self.plain[:] = 0
-        self.space_mask[:] = 0
-        self.left_space[:] = 0
+        self.upLetter[:] = 0
+        self.letterIdx = 0
+
         self.box_vec[:] = 0
         self.box_vec[0][-1] =1
 
-        self.NOEMS = 1
-        self.EMS = [np.array([0, 0, 0, *self.plain_size])]
+        self.EMS[0:self.NOEMS] = 0
+        self.EMS[0] = self.firstEMS
+        self.NOEMS  = 1
 
         self.boxes = []
         self.box_idx = 0
@@ -310,26 +302,16 @@ class Space(object):
         r['x_bottom'] = [self.plain_size[0]]
         r['y_right'] = [self.plain_size[1]]
 
-        self.EMS3D = dict()
-        self.EMS3D[0] = np.array([0, 0, 0, self.plain_size[0], self.plain_size[1], self.plain_size[2], self.serial_number])
-
-    @staticmethod
-    def update_height_graph(plain, box):
-        plain = copy.deepcopy(plain)
-        le = box.lx
-        ri = box.lx + box.x
-        up = box.ly
-        do = box.ly + box.y
-        max_h = np.max(plain[le:ri, up:do])
-        max_h = max(max_h, box.lz + box.z)
-        plain[le:ri, up:do] = max_h
-        return plain
-
-    def get_plain(self):
-        return copy.deepcopy(self.plain)
-
-    def get_action_space(self):
-        return self.plain_size[0] * self.plain_size[1]
+    def interSect2D(self, box):
+        if self.box_idx == 0:
+            return 0, [], []
+        intersect = np.around(np.minimum(box, self.upLetter[0: self.box_idx]), 6)
+        signal = (intersect[:, 0] + intersect[:, 2] > 0) * (intersect[:, 1] + intersect[:, 3] > 0) # 等于零的地方表示不相交
+        index = np.where(signal)[0]
+        if len(index) == 0:
+            return 0, [], []
+        else:
+            return np.max(self.upLetter[index, 4]), index, intersect[index]
 
     def get_ratio(self):
         vo = reduce(lambda x, y: x + y, [box.x * box.y * box.z for box in self.boxes], 0.0)
@@ -344,105 +326,109 @@ class Space(object):
         bottom_whole_contact_area -= dirction2D * 0.1
         return bottom_whole_contact_area.tolist()
 
-    def drop_box(self, box_size, idx, flag, density, setting):
+    def drop_box(self, box_size, idx, flag, density, setting, **kwags):
         if not flag:
             x, y, z = box_size
         else:
             y, x, z = box_size
 
         lx, ly = idx
-        rec = self.plain[lx:lx + x, ly:ly + y]
-        max_h = np.max(rec)
+
+        if lx + x - 1e-6 > self.plain_size[0] or ly + y - 1e-6 > self.plain_size[1]:
+            return False
+        if lx + 1e-6 < 0 or ly + 1e-6 < 0:
+            return False
+        box_info = np.array([-lx, -ly, lx + x, ly + y, 0])
+        max_h, interIdx, interArea = self.interSect2D(box_info)
+        if max_h + z - 1e-6 > self.height:
+            return False
+        box_info[-1] = max_h + z
         box_now = Box(x, y, z, lx, ly, max_h, density)
 
         if setting != 2:
             combine_contact_points = []
-            for tmp in self.boxes:
-                if tmp.lz + tmp.z == max_h:
-                    x1 = max(box_now.vertex_low[0], tmp.vertex_low[0])
-                    y1 = max(box_now.vertex_low[1], tmp.vertex_low[1])
-                    x2 = min(box_now.vertex_high[0], tmp.vertex_high[0])
-                    y2 = min(box_now.vertex_high[1], tmp.vertex_high[1])
-                    if x1 >= x2 or y1 >= y2:
-                        continue
-                    else:
-                        newEdge = DownEdge(tmp)
-                        newEdge.area = (x1, y1, x2, y2)
-                        newEdge.centre2D = np.array([x1 + x2, y1 + y2]) / 2
-                        box_now.bottom_edges.append(newEdge)
-                        combine_contact_points.append([x1, y1])
-                        combine_contact_points.append([x1, y2])
-                        combine_contact_points.append([x2, y1])
-                        combine_contact_points.append([x2, y2])
+            for inner in range(len(interIdx)):
+                idx = interIdx[inner]
+                tmp = self.boxes[idx]
+                if abs(tmp.lz + tmp.z - max_h) < 1e-6:
+
+                    x1, y1, x2, y2, _ = interArea[inner]
+                    x1, y1 = -x1, -y1
+                    newEdge = DownEdge(tmp)
+                    newEdge.area = (x1, y1, x2, y2)
+                    newEdge.centre2D = np.array([x1 + x2, y1 + y2]) / 2
+                    box_now.bottom_edges.append(newEdge)
+                    combine_contact_points.append([x1, y1])
+                    combine_contact_points.append([x1, y2])
+                    combine_contact_points.append([x2, y1])
+                    combine_contact_points.append([x2, y2])
 
             if len(combine_contact_points) > 0:
                 box_now.bottom_whole_contact_area = self.scale_down(ConvexHull(combine_contact_points))
-        sta_flag = self.check_box(x, y, lx, ly, z, max_h, box_now, setting)
+        sta_flag = self.check_box(max_h, box_now, setting)
         if sta_flag:
             self.boxes.append(box_now)  # record rotated box
-            self.plain = self.update_height_graph(self.plain, self.boxes[-1])
-            self.height = max(self.height, max_h + z)
+            self.upLetter[self.box_idx] = box_info
             self.box_vec[self.box_idx] = np.array(
-                        [lx, ly, max_h, lx + x, ly + y, max_h + z, density, 0, 1])
+                        [lx, ly, max_h, lx + x, ly + y, max_h + z, 0, 0, 1])
             self.box_idx += 1
             return True
         return False
 
-    def drop_box_virtual(self, box_size, idx, flag, density, setting,  returnH = False, returnMap = False):
+    def drop_box_virtual(self, box_size, idx, flag, density, setting, returnH = False, **kwargs):
         if not flag:
             x, y, z = box_size
         else:
             y, x, z = box_size
 
         lx, ly = idx
-        rec = self.plain[lx:lx + x, ly:ly + y]
-        max_h = np.max(rec)
+        checkResult = True
+        if lx + x - 1e-6 > self.plain_size[0] or ly + y - 1e-6 > self.plain_size[1]:
+            checkResult = False
+        if lx + 1e-6 < 0 or ly + 1e-6 < 0:
+            checkResult = False
+
+        box_info = np.array([-lx, -ly, lx + x, ly + y, 0])
+        max_h, interIdx, interArea = self.interSect2D(box_info)
+
+        if max_h + z - 1e-6 > self.height:
+            checkResult = False
 
         box_now = Box(x, y, z, lx, ly, max_h, density, True)
 
-        if setting != 2:
+        if setting != 2 and checkResult:
             combine_contact_points = []
-            for tmp in self.boxes:
-                if tmp.lz + tmp.z == max_h:
-                    x1 = max(box_now.vertex_low[0], tmp.vertex_low[0])
-                    y1 = max(box_now.vertex_low[1], tmp.vertex_low[1])
-                    x2 = min(box_now.vertex_high[0], tmp.vertex_high[0])
-                    y2 = min(box_now.vertex_high[1], tmp.vertex_high[1])
-                    if x1 >= x2 or y1 >= y2:
-                        continue
-                    else:
-                        newEdge = DownEdge(tmp)
-                        newEdge.area = (x1, y1, x2, y2)
-                        newEdge.centre2D = np.array([x1 + x2, y1 + y2]) / 2
-                        box_now.bottom_edges.append(newEdge)
-                        combine_contact_points.append([x1, y1])
-                        combine_contact_points.append([x1, y2])
-                        combine_contact_points.append([x2, y1])
-                        combine_contact_points.append([x2, y2])
+            for inner in range(len(interIdx)):
+                idx = interIdx[inner]
+                tmp = self.boxes[idx]
+                if abs(tmp.lz + tmp.z - max_h) < 1e-6:
+                    x1, y1, x2, y2, _ = interArea[inner]
+                    x1, y1 = -x1, -y1
+
+                    newEdge = DownEdge(tmp)
+                    newEdge.area = (x1, y1, x2, y2)
+                    newEdge.centre2D = np.array([x1 + x2, y1 + y2]) / 2
+                    box_now.bottom_edges.append(newEdge)
+                    combine_contact_points.append([x1, y1])
+                    combine_contact_points.append([x1, y2])
+                    combine_contact_points.append([x2, y1])
+                    combine_contact_points.append([x2, y2])
 
             if len(combine_contact_points) > 0:
                 box_now.bottom_whole_contact_area = self.scale_down(ConvexHull(combine_contact_points))
 
         if returnH:
-            return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True), max_h
-        elif returnMap:
-            return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True), self.update_height_graph(self.plain, box_now)
+            return checkResult and self.check_box(max_h, box_now, setting, True), max_h
         else:
-            return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True)
+            return checkResult and self.check_box(max_h, box_now, setting, True)
 
-    def check_box(self, x, y, lx, ly, z, max_h, box_now, setting, virtual=False):
+
+    def check_box(self, max_h, box_now, setting, virtual=False):
         assert isinstance(setting, int)
-        if lx + x > self.plain_size[0] or ly + y > self.plain_size[1]:
-            return False
-        if lx < 0 or ly < 0:
-            return False
-        if max_h + z > self.height:
-            return False
-
         if setting == 2:
             return True
         else:
-            if max_h == 0:
+            if abs(max_h) < 1e-6:
                 return True
             if not virtual:
                 result = box_now.calculated_impact()
@@ -450,39 +436,46 @@ class Space(object):
             else:
                 return box_now.calculated_impact_virtual(True)
 
+    def interSectEMS3D(self, itemLocation):
+        itemLocation[0:3] *= -1
+
+        EMS = self.EMS[0:self.NOEMS].copy()
+        EMS[:, 0:3] *= -1
+
+        if self.box_idx == 0:
+            return 0, [], []
+
+        intersect = np.around(np.minimum(itemLocation, EMS), 6)
+        signal = (intersect[:, 0] + intersect[:, 3] > 0) * (intersect[:, 1] + intersect[:, 4] > 0) * (intersect[:, 2] + intersect[:, 5] > 0)
+        delindex = np.where(signal)[0] 
+        saveindex = np.where(signal == False)[0]
+        intersect = intersect[delindex]
+        intersect[:, 0:3] *= -1
+        return delindex, saveindex, intersect
+
     def GENEMS(self, itemLocation):
-        numofemss = len(self.EMS)
-        delflag = []
-        for emsIdx in range(numofemss):
-            xems1, yems1, zems1, xems2, yems2, zems2 = self.EMS[emsIdx]
-            xtmp1, ytmp1, ztmp1, xtmp2, ytmp2, ztmp2 = itemLocation
+        originemss = self.NOEMS
+        delflag, validflag, intersect = self.interSectEMS3D(np.array(itemLocation))
 
-            if (xems1 > xtmp1): xtmp1 = xems1
-            if (yems1 > ytmp1): ytmp1 = yems1
-            if (zems1 > ztmp1): ztmp1 = zems1
-            if (xems2 < xtmp2): xtmp2 = xems2
-            if (yems2 < ytmp2): ytmp2 = yems2
-            if (zems2 < ztmp2): ztmp2 = zems2
-
-            if (xtmp1 > xtmp2): xtmp1 = xtmp2
-            if (ytmp1 > ytmp2): ytmp1 = ytmp2
-            if (ztmp1 > ztmp2): ztmp1 = ztmp2
-            if (xtmp1 == xtmp2 or ytmp1 == ytmp2 or ztmp1 == ztmp2):
-                continue
-
-            self.Difference(emsIdx, (xtmp1, ytmp1, ztmp1, xtmp2, ytmp2, ztmp2))
-            delflag.append(emsIdx)
+        for idx in range(len(delflag)):
+            emsIdx = delflag[idx]
+            inter = intersect[idx]
+            self.Difference(emsIdx, inter)
 
         if len(delflag) != 0:
-            NOEMS = len(self.EMS)
-            self.EMS = [self.EMS[i] for i in range(NOEMS) if i not in delflag]
-        self.EliminateInscribedEMS()
+            validflag = [*validflag, *range(originemss, self.NOEMS)]
+            validLength = len(validflag)
+            self.EMS[0:validLength,:] = self.EMS[validflag, :]
+            self.EMS[validLength:self.NOEMS,:] = 0
+            self.NOEMS = validLength
+
+        self.NOEMS, self.EMS = self.EliminateInscribedEMS(self.NOEMS, self.EMS)
 
         # maintain the event point by the way
         cx_min, cy_min, cz_min, cx_max, cy_max, cz_max = itemLocation
         # bottom
         if cz_min < self.plain_size[2]:
-            bottomRecorder = self.ZMAP[cz_min]
+            bottomRecorder = self.ZMAP[round(cz_min, 6)]
             cbox2d = [cx_min, cy_min, cx_max, cy_max]
             maintainEventBottom(cbox2d, bottomRecorder['x_up'], bottomRecorder['y_left'], bottomRecorder['x_bottom'],
                                 bottomRecorder['y_right'], self.plain_size)
@@ -493,8 +486,6 @@ class Space(object):
     def Difference(self, emsID, intersection):
         x1, y1, z1, x2, y2, z2 = self.EMS[emsID]
         x3, y3, z3, x4, y4, z4, = intersection
-        if self.low_bound == 0:
-            self.low_bound = 0.1
         if IsUsableEMS(self.low_bound, self.low_bound, self.low_bound, x1, y1, z1, x3, y2, z2):
             self.AddNewEMS(x1, y1, z1, x3, y2, z2)
         if IsUsableEMS(self.low_bound, self.low_bound, self.low_bound, x4, y1, z1, x2, y2, z2):
@@ -507,24 +498,30 @@ class Space(object):
             self.AddNewEMS(x1, y1, z4, x2, y2, z2)
 
     def AddNewEMS(self, a, b, c, x, y, z):
-        self.EMS.append(np.array([a, b, c, x, y, z]))
+        self.EMS[self.NOEMS] = np.array([a, b, c, x, y, z])
+        self.NOEMS += 1
 
-    def EliminateInscribedEMS(self):
-        NOEMS = len(self.EMS)
+    @staticmethod
+    def EliminateInscribedEMS(NOEMS, EMS):
         delflags = np.zeros(NOEMS)
         for i in range(NOEMS):
             for j in range(NOEMS):
                 if i == j:
                     continue
-                if (self.EMS[i][0] >= self.EMS[j][0] and self.EMS[i][1] >= self.EMS[j][1]
-                        and self.EMS[i][2] >= self.EMS[j][2] and self.EMS[i][3] <= self.EMS[j][3]
-                        and self.EMS[i][4] <= self.EMS[j][4] and self.EMS[i][5] <= self.EMS[j][5]):
+                if (EMS[i][0] >= EMS[j][0] and EMS[i][1] >= EMS[j][1]
+                    and EMS[i][2] >= EMS[j][2] and EMS[i][3] <= EMS[j][3]
+                    and EMS[i][4] <= EMS[j][4] and EMS[i][5] <= EMS[j][5]):
                     delflags[i] = 1
                     break
-        self.EMS = [self.EMS[i] for i in range(NOEMS) if delflags[i] != 1]
-        return len(self.EMS)
+        saveIdx = np.where(delflags == 0)[0]
+        validLength = len(saveIdx)
 
-    #######################################################################################
+        if validLength!= 0:
+            EMS[0:validLength] = EMS[saveIdx]
+        EMS[validLength:NOEMS] = 0
+        NOEMS = validLength
+        return NOEMS, EMS
+
     def EMSPoint(self, next_box, setting):
         posVec = set()
         if setting == 2: orientation = 6
@@ -555,50 +552,13 @@ class Space(object):
                     if sizex == sizey:
                         continue
 
-                if ems[3] - ems[0] >= sizex and ems[4] - ems[1] >= sizey and ems[5] - ems[2] >= sizez:
+                if ems[3] - ems[0] + 1e-6 >= sizex and ems[4] - ems[1] + 1e-6 >= sizey and ems[5] - ems[
+                    2] + 1e-6 >= sizez:
                     posVec.add((ems[0], ems[1], ems[2], ems[0] + sizex, ems[1] + sizey, ems[2] + sizez))
                     posVec.add((ems[3] - sizex, ems[1], ems[2], ems[3], ems[1] + sizey, ems[2] + sizez))
                     posVec.add((ems[0], ems[4] - sizey, ems[2], ems[0] + sizex, ems[4], ems[2] + sizez))
                     posVec.add((ems[3] - sizex, ems[4] - sizey, ems[2], ems[3], ems[4], ems[2] + sizez))
         posVec = np.array(list(posVec))
+        # tmpVec = np.around(posVec, 6)
         return posVec
 
-    #######################################################################################
-    def FullCoord(self, next_box, setting):
-        posVec = set()
-        if setting == 2: orientation = 6
-        else: orientation = 2
-
-        for rot in range(orientation):  # 0 x y z, 1 y x z, 2 x z y,  3 y z x, 4 z x y, 5 z y x
-            if rot == 0:
-                sizex, sizey, sizez = next_box[0], next_box[1], next_box[2]
-            elif rot == 1:
-                sizex, sizey, sizez = next_box[1], next_box[0], next_box[2]
-                if sizex == sizey:
-                    continue
-            elif rot == 2:
-                sizex, sizey, sizez = next_box[0], next_box[2], next_box[1]
-                if sizex == sizey and sizey == sizez:
-                    continue
-            elif rot == 3:
-                sizex, sizey, sizez = next_box[1], next_box[2], next_box[0]
-                if sizex == sizey and sizey == sizez:
-                    continue
-            elif rot == 4:
-                sizex, sizey, sizez = next_box[2], next_box[0], next_box[1]
-                if sizex == sizey:
-                    continue
-            elif rot == 5:
-                sizex, sizey, sizez = next_box[2], next_box[1], next_box[0]
-                if sizex == sizey:
-                    continue
-
-            for lx in range(self.plain_size[0]):
-                for ly in range(self.plain_size[1]):
-                    lz = self.plain[lx, ly]
-                    if lx + sizex <= self.plain_size[0] and ly + sizey <= self.plain_size[1] \
-                            and lz + sizez <= self.plain_size[2]:
-                        posVec.add((lx, ly, lz, lx + sizex, ly + sizey, lz + sizez))
-
-        posVec = np.array(list(posVec))
-        return posVec

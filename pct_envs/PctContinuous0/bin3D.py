@@ -5,12 +5,15 @@ from .binCreator import RandomBoxCreator, LoadBoxCreator, BoxCreator
 import torch
 import random
 
-class PackingDiscrete(gym.Env):
+class PackingContinuous(gym.Env):
     def __init__(self,
                  setting,
                  container_size=(10, 10, 10),
                  item_set=None, data_name=None, load_test_data=False,
                  internal_node_holder=80, leaf_node_holder=50, next_holder=1, shuffle=False,
+                 sample_from_distribution = True,
+                 sample_left_bound = 0.1,
+                 sample_right_bound = 0.5,
                  **kwags):
 
         self.internal_node_holder = internal_node_holder
@@ -19,7 +22,11 @@ class PackingDiscrete(gym.Env):
 
         self.shuffle = shuffle
         self.bin_size = container_size
-        self.size_minimum = np.min(np.array(item_set))
+        if sample_from_distribution:
+            self.size_minimum = sample_left_bound
+            self.sample_left_bound = sample_left_bound
+            self.sample_right_bound = sample_right_bound
+        else: self.size_minimum = np.min(np.array(item_set))
         self.space = Space(*self.bin_size, self.size_minimum, self.internal_node_holder)
         self.setting = setting
         self.item_set = item_set
@@ -31,6 +38,7 @@ class PackingDiscrete(gym.Env):
             self.box_creator = RandomBoxCreator(item_set)
             assert isinstance(self.box_creator, BoxCreator)
 
+        self.sample_from_distribution = sample_from_distribution
         if load_test_data:
             self.box_creator = LoadBoxCreator(data_name)
 
@@ -70,7 +78,7 @@ class PackingDiscrete(gym.Env):
         if self.test:
             if self.setting == 3: self.next_den = self.next_box[3]
             else: self.next_den = 1
-            self.next_box = [int(self.next_box[0]), int(self.next_box[1]), int(self.next_box[2])]
+            self.next_box = [round(self.next_box[0], 3), round(self.next_box[1], 3), round(self.next_box[2], 3)]
         else:
             if self.setting < 3: self.next_den = 1
             else:
@@ -88,13 +96,22 @@ class PackingDiscrete(gym.Env):
         return np.reshape(np.concatenate((*boxes, *leaf_nodes, self.next_box_vec)), (-1))
 
     def gen_next_box(self):
-        return self.box_creator.preview(1)[0]
+        if self.sample_from_distribution and not self.test:
+            if self.setting == 2:
+                next_box = (round(np.random.uniform(self.sample_left_bound,self.sample_right_bound), 3),
+                        round(np.random.uniform(self.sample_left_bound,self.sample_right_bound), 3),
+                        round(np.random.uniform(self.sample_left_bound,self.sample_right_bound), 3))
+            else:
+                next_box = (round(np.random.uniform(self.sample_left_bound,self.sample_right_bound), 3),
+                        round(np.random.uniform(self.sample_left_bound,self.sample_right_bound), 3),
+                        np.random.choice([0.1,0.2,0.3,0.4,0.5]))
+        else:
+            next_box = self.box_creator.preview(1)[0]
+        return next_box
 
     def get_possible_position(self):
         if   self.LNES == 'EMS':
-            allPostion = self.space.EMSPoint(self.next_box,  self.setting)
-        elif self.LNES == 'FULL':
-            allPostion = self.space.FullCoord(self.next_box, self.setting)
+            allPostion = self.space.EMSPoint(self.next_box, self.setting)
         else:
             assert False
 
@@ -124,21 +141,27 @@ class PackingDiscrete(gym.Env):
 
     def LeafNode2Action(self, leaf_node):
         if np.sum(leaf_node[0:6]) == 0: return (0, 0, 0), self.next_box
-        x = int(leaf_node[3] - leaf_node[0])
-        y = int(leaf_node[4] - leaf_node[1])
-        z = list(self.next_box)
-        z.remove(x)
-        z.remove(y)
-        z = z[0]
-        action = (0, int(leaf_node[0]), int(leaf_node[1]))
-        next_box = (x, y, int(z))
+        x = round(leaf_node[3] - leaf_node[0], 6)
+        y = round(leaf_node[4] - leaf_node[1], 6)
+        record = [0,1,2]
+        for r in record:
+            if abs(x - self.next_box[r]) < 1e-6:
+                record.remove(r)
+            break
+        for r in record:
+            if abs(y - self.next_box[r]) < 1e-6:
+                record.remove(r)
+            break
+        z = self.next_box[record[0]]
+        action = (0, leaf_node[0], leaf_node[1])
+        next_box = (x, y, z)
         return action, next_box
 
     def step(self, action):
         if len(action) != 3: action, next_box = self.LeafNode2Action(action)
         else: next_box = self.next_box
 
-        idx = [action[1], action[2]]
+        idx = [round(action[1], 6), round(action[2], 6)]
         bin_index = 0
         rotation_flag = action[0]
         succeeded = self.space.drop_box(next_box, idx, rotation_flag, self.next_den, self.setting)
@@ -157,8 +180,9 @@ class PackingDiscrete(gym.Env):
 
         if  self.LNES == 'EMS':
             self.space.GENEMS([packed_box.lx, packed_box.ly, packed_box.lz,
-                                           packed_box.lx + packed_box.x, packed_box.ly + packed_box.y,
-                                           packed_box.lz + packed_box.z])
+                                       round(packed_box.lx + packed_box.x, 6),
+                                       round(packed_box.ly + packed_box.y, 6),
+                                       round(packed_box.lz + packed_box.z, 6)])
 
         self.packed.append(
             [packed_box.x, packed_box.y, packed_box.z, packed_box.lx, packed_box.ly, packed_box.lz, bin_index])
