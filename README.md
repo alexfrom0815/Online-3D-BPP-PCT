@@ -1,8 +1,8 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
-**This repository is being continuously updated, please stay tuned!** 
+**This repository is fully published now, all kinds of feedback and any contribution is welcome!** 
 
-Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
+**I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
 We propose to enhance the practical applicability of online 3D-BPP via learning on a hierarchical packing configuration tree which makes the DRL model easy to deal with practical constraints and well-performing even with continuous solution space.
 
@@ -98,10 +98,4 @@ python heuristic.py -h
 ### License
 ```
 This source code is released only for academic use. Please do not use it for commercial purpose without authorization of the author.
-```
-
-### TODO (This code will be fully published by March 2022)
-```
-1. Add other leaf node expansion schemes.
-2. Feedback of various bugs is welcome.
 ```
