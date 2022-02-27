@@ -2,12 +2,6 @@
 
 **This repository is being continuously updated, please stay tuned!** 
 
-Update: 22/2/2022 (Heuristic baseline algorithm added.)
-
-Update: 23/2/2022 (Continous enviroment and algorithms added.)
-
-Update: 27/2/2022 (Code notes added.)
-
 Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
 We propose to enhance the practical applicability of online 3D-BPP via learning on a hierarchical packing configuration tree which makes the DRL model easy to deal with practical constraints and well-performing even with continuous solution space.
@@ -58,6 +52,8 @@ item_size_set:  A list records the size of each item. The size of each item is a
 You can download the prepared dataset from [here](https://drive.google.com/drive/folders/1QLaLLnpVySt_nNv0c6YetriHh0Ni-yXY?usp=sharing).
 The dataset consists of 3000 randomly generated trajectories, each with 150 items. The item is a vector of length 3 or 4, the first three numbers of the item represent the size of the item, the fourth number (if any) represents the density of the item.
 
+### Model
+We provide [pretrained models](https://drive.google.com/drive/folders/14PC3aVGiYZU5AaGdNM9YOVdp8pPiZ3fe?usp=sharing) trained using the EMS scheme in a discrete environment, where the bin size is (10,10,10) and item size range from 1 to 5.
 
 ### Training
 
@@ -104,7 +100,6 @@ This source code is released only for academic use. Please do not use it for com
 
 ### TODO (This code will be fully published by March 2022)
 ```
-1. Add pretrained model.
-2. Add other leaf node expansion schemes.
-3. Feedback of various bugs is welcome.
+1. Add other leaf node expansion schemes.
+2. Feedback of various bugs is welcome.
 ```
