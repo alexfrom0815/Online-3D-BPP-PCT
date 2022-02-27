@@ -2,9 +2,11 @@
 
 **This repository is being continuously updated, please stay tuned!** 
 
-Update: 22/2/2022 (Heuristic baseline algorithm added!)
+Update: 22/2/2022 (Heuristic baseline algorithm added.)
 
-Update: 23/2/2022 (Continous enviroment and algorithms added!)
+Update: 23/2/2022 (Continous enviroment and algorithms added.)
+
+Update: 27/2/2022 (Code notes added.)
 
 Any code contribution is welcome!  **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
@@ -102,8 +104,7 @@ This source code is released only for academic use. Please do not use it for com
 
 ### TODO (This code will be fully published by March 2022)
 ```
-1. Add more user documentation and notes.
-2. Add pretrained model.
-3. Add other leaf node expansion schemes.
-4. Feedback of various bugs is welcome.
+1. Add pretrained model.
+2. Add other leaf node expansion schemes.
+3. Feedback of various bugs is welcome.
 ```
