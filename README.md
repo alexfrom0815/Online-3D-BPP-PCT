@@ -70,7 +70,7 @@ For training online 3D BPP instances on setting 1 (80 internal nodes and 50 leaf
 ```bash
 python main.py --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
-If you want to train a model works on **continuous** domain, add '--continuous', don't forget to change your problem in 'givenData.py':
+If you want to train a model that works on the **continuous** domain, add '--continuous', don't forget to change your problem in 'givenData.py':
 ```bash
 python main.py --continuous --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
