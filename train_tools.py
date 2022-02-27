@@ -21,9 +21,9 @@ class train_tools(object):
         seed = args.seed
 
         if self.use_acktr:
-            self.policy_optim = KFACOptimizer(self.PCT_policy)
+            self.policy_optim = KFACOptimizer(self.PCT_policy) # For ACKTR method. （https://proceedings.neurips.cc/paper/2017/hash/361440528766bbaaaa1901845cf4152b-Abstract.html）
         else:
-            self.policy_optim = optim.Adam(self.PCT_policy.parameters(), lr=args.learning_rate)
+            self.policy_optim = optim.Adam(self.PCT_policy.parameters(), lr=args.learning_rate) # For naive A2C method.
 
         if seed is not None:
             torch.manual_seed(seed)
@@ -32,11 +32,10 @@ class train_tools(object):
             random.seed(seed)
 
     def train_n_steps(self, envs, args, device):
-        """Constructs the main actor & critic networks, and performs all training."""
         model_save_path = os.path.join(args.model_save_path, self.timeStr)
         sub_time_str = time.strftime('%Y.%m.%d-%H-%M-%S', time.localtime(time.time()))
-        factor = args.normFactor
         self.PCT_policy.train()
+        factor = args.normFactor # NormFactor controlls the maximum value of the original input of the network to less than 1.0, which helps the training of the network
 
         obs = envs.reset()
         all_nodes, leaf_nodes = tools.get_leaf_nodes(obs, args.internal_node_holder, args.leaf_node_holder)
@@ -44,8 +43,8 @@ class train_tools(object):
                                         args.num_processes,
                                         obs_shape=all_nodes.shape[1:],
                                         gamma = args.gamma)
-
         pct_rollout.to(device)
+
         start = time.time()
         ratio_recorder = 0
         episode_rewards = deque(maxlen=10)
@@ -57,6 +56,9 @@ class train_tools(object):
         pct_rollout.obs[0].copy_(all_nodes)
 
         while True:
+            ##############################################
+            ####### Collect n-step training sample #######
+            ##############################################
             self.step_counter += 1
             for step in range(num_steps):
                 with torch.no_grad():
@@ -84,7 +86,6 @@ class train_tools(object):
             ##############################################
             ########### PCT policy optimzation ###########
             ##############################################
-
             obs_shape = pct_rollout.obs.size()[2:]
             action_shape = pct_rollout.actions.size()[-1]
             leaf_node_value, selectedlogProb, dist_entropy = self.PCT_policy.evaluate_actions(pct_rollout.obs[:-1].view(-1, *obs_shape),
@@ -125,6 +126,7 @@ class train_tools(object):
             ##############################################
             pct_rollout.after_update()
 
+            # Save the trained policy model
             if (self.step_counter % args.model_save_interval == 0) and args.model_save_path != "":
                 if self.step_counter % args.model_update_interval == 0:
                     sub_time_str = time.strftime('%Y.%m.%d-%H-%M-%S', time.localtime(time.time()))
@@ -134,6 +136,7 @@ class train_tools(object):
 
                 torch.save(self.PCT_policy.state_dict(), os.path.join(model_save_path, 'PCT-' + self.timeStr + '_' + sub_time_str + ".pt"))
 
+            # Write tensorboard logs.
             if self.step_counter % args.print_log_interval == 0 and len(episode_rewards)>1:
                 total_num_steps = (self.step_counter + 1 - inside_counter) * num_processes * num_steps
                 end = time.time()

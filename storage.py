@@ -1,5 +1,6 @@
 import torch
 
+# Storage for n-step training.
 class PCTRolloutStorage(object):
     def __init__(self, num_steps, num_processes, obs_shape, gamma):
         self.obs = torch.zeros(num_steps + 1, num_processes, *obs_shape)

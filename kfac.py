@@ -191,8 +191,6 @@ class KFACOptimizer(optim.Optimizer):
 
             la = self.damping + self.weight_decay
             if self.steps % self.Tf == 0:
-                # My asynchronous implementation exists, I will add it later.
-                # Experimenting with different ways to this in PyTorch.
                 self.d_g[m], self.Q_g[m] = torch.symeig(
                     self.m_gg[m], eigenvectors=True)
                 self.d_a[m], self.Q_a[m] = torch.symeig(

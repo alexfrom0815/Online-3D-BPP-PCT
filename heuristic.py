@@ -11,6 +11,7 @@ https://dl.acm.org/doi/abs/10.1145/3414685.3417796
 def MACS(env, times = 2000):
     def calc_maximal_usable_spaces(ctn, H):
         '''
+        Score the given placement.
         This score function comes from https://github.com/Juzhan/TAP-Net/blob/master/tools.py
         '''
         score = 0
@@ -61,6 +62,7 @@ def MACS(env, times = 2000):
     for counter in range(times):
         while True:
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -79,6 +81,7 @@ def MACS(env, times = 2000):
             next_den = env.next_den
 
             for ems in EMS:
+                # Find the most suitable placement within the allowed orientation.
                 for rot in range(env.orientation):
                     if rot == 0:
                         x, y, z = next_box
@@ -104,6 +107,7 @@ def MACS(env, times = 2000):
                             elif corner == 3:
                                 lx, ly = ems[3] - x, ems[4] - y
 
+                            # Check the feasibility of this placement
                             feasible, height = env.space.drop_box_virtual([x, y, z], (lx, ly), False,
                                                                               next_den, env.setting, returnH=True)
                             if feasible:
@@ -117,10 +121,12 @@ def MACS(env, times = 2000):
                                     bestAction = [0, lx, ly, height]
 
             if bestAction is not None:
+                # Place this item in the environment with the best action.
                 update_container(container, bestAction[1:4], env.next_box)
                 block_index += 1
                 _, _, done, _ = env.step(bestAction[0:3])
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return  np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)
@@ -143,6 +149,7 @@ def LASH(env, times = 2000):
     for counter in range(times):
         while True:
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -161,6 +168,7 @@ def LASH(env, times = 2000):
             next_den = env.next_den
 
             for ems in EMS:
+                # Find the most suitable placement within the allowed orientation.
                 if np.sum(np.abs(ems)) == 0:
                     continue
                 for rot in range(env.orientation):
@@ -179,6 +187,7 @@ def LASH(env, times = 2000):
 
                     if ems[3] - ems[0] >= x and ems[4] - ems[1] >= y and ems[5] - ems[2] >= z:
                         lx, ly = ems[0], ems[1]
+                        # Check the feasibility of this placement
                         feasible, height = env.space.drop_box_virtual([x, y, z], (lx, ly), False,
                                                                     next_den, env.setting, returnH=True)
 
@@ -188,6 +197,7 @@ def LASH(env, times = 2000):
                                     + (height + z) * (max(ly + y, maxXY[1]) - min(ly, minXY[1])) \
                                     + (height + z) * (max(lx + x, maxXY[0]) - min(lx, minXY[0]))
 
+                            # The placement which keeps pack items with less surface area is better.
                             if score < bestScore:
                                 bestScore = score
                                 env.next_box = [x, y, z]
@@ -207,8 +217,10 @@ def LASH(env, times = 2000):
                 if ly + y > maxXY[1]: maxXY[1] = ly + y
                 if lx < minXY[0]: minXY[0] = lx
                 if ly < minXY[1]: minXY[1] = ly
+                # Place this item in the environment with the best action.
                 _, _, done, _ = env.step(bestAction[0:3])
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return  np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)
@@ -227,6 +239,7 @@ def heightmap_min(env, times = 2000):
     for counter in range(times):
         while True:
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -243,6 +256,7 @@ def heightmap_min(env, times = 2000):
 
             for lx in range(bin_size[0] - next_box[0]):
                 for ly in range(bin_size[1] - next_box[1]):
+                    # Find the most suitable placement within the allowed orientation.
                     for rot in range(env.orientation):
                         if rot == 0:
                             x, y, z = next_box
@@ -257,11 +271,13 @@ def heightmap_min(env, times = 2000):
                         elif rot == 5:
                             y, z, x = next_box
 
+                        # Check the feasibility of this placement
                         feasible, heightMap = env.space.drop_box_virtual([x, y, z], (lx, ly), False,
                                                                              next_den, env.setting, False, True)
                         if not feasible:
                             continue
 
+                        # Score the given placement.
                         score = lx + ly + 100 * np.sum(heightMap)
                         if score < bestScore:
                             bestScore = score
@@ -269,9 +285,11 @@ def heightmap_min(env, times = 2000):
                             bestAction = [0, lx, ly]
 
             if len(bestAction) != 0:
+                # Place this item in the environment with the best action.
                 env.step(bestAction)
                 done = False
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return  np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)
@@ -289,6 +307,7 @@ def random(env, times = 2000):
     for counter in range(times):
         while True:
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -300,6 +319,7 @@ def random(env, times = 2000):
             next_box = env.next_box
             next_den = env.next_den
 
+            # Check the feasibility of all placements.
             candidates = []
             for lx in range(bin_size[0] - next_box[0]):
                 for ly in range(bin_size[1] - next_box[1]):
@@ -325,11 +345,13 @@ def random(env, times = 2000):
                         candidates.append([[x, y, z], [0, lx, ly]])
 
             if len(candidates) != 0:
+                # Pick one placement randomly from all possible placements
                 idx = np.random.randint(0, len(candidates))
                 env.next_box = candidates[idx][0]
                 env.step(candidates[idx][1])
                 done = False
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return  np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)
@@ -348,6 +370,7 @@ def OnlineBPH(env, times = 2000):
     for counter in range(times):
         while True:
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -356,6 +379,7 @@ def OnlineBPH(env, times = 2000):
                 done = False
                 break
 
+            # Sort the ems placement with deep-bottom-left order.
             EMS = env.space.EMS
             EMS = sorted(EMS, key=lambda ems: (ems[2], ems[1], ems[0]), reverse=False)
 
@@ -364,10 +388,9 @@ def OnlineBPH(env, times = 2000):
             next_den = env.next_den
             stop = False
 
-            if next_box[0] == 0.307 and next_box[1] == 0.276 and next_box[2] == 0.5:
-                print('debug')
 
             for ems in EMS:
+                # Find the first suitable placement within the allowed orientation.
                 if np.sum(np.abs(ems)) == 0:
                     continue
                 for rot in range(env.orientation):
@@ -384,9 +407,7 @@ def OnlineBPH(env, times = 2000):
                     elif rot == 5:
                         y, z, x = next_box
 
-                    if ems[0] == 0.116 and ems[1] == 0.369 and ems[2] == 0.3:
-                        print('debug')
-
+                    # Check the feasibility of this placement
                     if env.space.drop_box_virtual([x, y, z], (ems[0], ems[1]), False, next_den, env.setting):
                         env.next_box = [x, y, z]
                         bestAction = [0, ems[0], ems[1]]
@@ -395,8 +416,10 @@ def OnlineBPH(env, times = 2000):
                 if stop: break
 
             if bestAction is not None:
+                # Place this item in the environment with the best action.
                 _, _, done, _ = env.step(bestAction)
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)
@@ -415,6 +438,7 @@ def DBL(env, times = 2000):
     for counter in range(times):
         while True:
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -431,6 +455,7 @@ def DBL(env, times = 2000):
 
             for lx in range(bin_size[0] - next_box[0]):
                 for ly in range(bin_size[1] - next_box[1]):
+                    # Find the most suitable placement within the allowed orientation.
                     for rot in range(env.orientation):
                         if rot == 0:
                             x, y, z = next_box
@@ -445,11 +470,13 @@ def DBL(env, times = 2000):
                         elif rot == 5:
                             y, z, x = next_box
 
+                        # Check the feasibility of this placement
                         feasible, height = env.space.drop_box_virtual([x, y, z], (lx, ly), False,
                                                                          next_den, env.setting, True, False)
                         if not feasible:
                             continue
 
+                        # Score the given placement.
                         score = lx + ly + 100 * height
                         if score < bestScore:
                             bestScore = score
@@ -457,9 +484,11 @@ def DBL(env, times = 2000):
                             bestAction = [0, lx, ly]
 
             if len(bestAction) != 0:
+                # Place this item in the environment with the best action.
                 env.step(bestAction)
                 done = False
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)
@@ -470,6 +499,7 @@ https://ojs.aaai.org/index.php/AAAI/article/view/16155
 '''
 def BR(env, times = 2000):
     def eval_ems(ems):
+        # Score the given placement.
         s = 0
         valid = []
         for bs in env.item_set:
@@ -489,7 +519,9 @@ def BR(env, times = 2000):
 
     for counter in range(times):
         while True:
+
             if done:
+                # Reset the enviroment when the episode is done
                 result = env.space.get_ratio()
                 l = len(env.space.boxes)
                 print('Result of episode {}, utilization: {}, length: {}'.format(counter, result, l))
@@ -497,6 +529,7 @@ def BR(env, times = 2000):
                 env.reset()
                 done = False
                 break
+            
 
             bestScore = -1e10
             EMS = env.space.EMS
@@ -506,6 +539,7 @@ def BR(env, times = 2000):
             next_den = env.next_den
 
             for ems in EMS:
+                # Find the most suitable placement within the allowed orientation.
                 for rot in range(env.orientation):
                     if rot == 0:
                         x, y, z = next_box
@@ -522,19 +556,22 @@ def BR(env, times = 2000):
 
                     if ems[3] - ems[0] >= x and ems[4] - ems[1] >= y and ems[5] - ems[2] >= z:
                         lx, ly = ems[0], ems[1]
+                        # Check the feasibility of this placement
                         feasible, height = env.space.drop_box_virtual([x, y, z], (lx, ly), False,
                                                                           next_den, env.setting, returnH=True)
                         if feasible:
                             score = eval_ems(ems)
-
                             if score > bestScore:
                                 bestScore = score
                                 env.next_box = [x, y, z]
                                 bestAction = [0, lx, ly, height]
 
+
             if bestAction is not None:
+                # Place this item in the environment with the best action.
                 _, _, done, _ = env.step(bestAction[0:3])
             else:
+                # No feasible placement, this episode is done.
                 done = True
 
     return  np.mean(episode_utilization), np.var(episode_utilization), np.mean(episode_length)

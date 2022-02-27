@@ -66,17 +66,36 @@ def backup(timeStr, args, upper_policy = None):
     if upper_policy is not None:
         torch.save(upper_policy.state_dict(), os.path.join(args.model_save_path, timeStr, 'upper-first-' + timeStr + ".pt"))
 
+# Parsing PCT node from state returned in environment
 def get_leaf_nodes(observation, internal_node_holder, leaf_node_holder):
     unify_obs = observation.reshape((observation.shape[0], -1, 9))
     leaf_nodes = unify_obs[:, internal_node_holder:internal_node_holder + leaf_node_holder, :]
     return unify_obs, leaf_nodes
 
-def get_leaf_nodes_with_factor(observation, factor, batch_size, internal_node_holder, leaf_node_holder):
+def get_leaf_nodes_with_factor(observation,  batch_size, internal_node_holder, leaf_node_holder):
     unify_obs = observation.reshape((batch_size, -1, 9))
-    unify_obs[:, :, 0:6] *= factor
+    # unify_obs[:, :, 0:6] *= factor
     leaf_nodes = unify_obs[:, internal_node_holder:internal_node_holder + leaf_node_holder, :]
     return unify_obs, leaf_nodes
 
+'''
+Parsing the raw state returned in environment:
+
+internal_nodes    : A packed item vector, [x1, y1, z1, x2, y2, z2, density(optional) ]
+                    x1, y1, z1 are coordinates of a packed item
+                    x2 = x1 + x, y2 = y1 + y, z2 = z1 + z
+                    x, y, z are sizes of a packed item (a little different from the original paper,
+                    these two description have similar performance.).
+leaf_nodes        : A placement vector, [x1, y1, z1, x2, y2, z2]
+                    x1, y1, z1 are coordinates of a placement.
+                    x2 = x1 + x, y2 = y1 + y, z2 = z1 + z
+                    x, y, z are  sizes of the current item after an axis-aligned orientation (a little different from the original paper,
+                    these two description have similar performance.).
+next_item         : The next item to be packed [density(optional), 0, 0,x, y, z]
+                    x, y, z are  sizes of the current item.
+invalid_leaf_nodes: The mask which indicates whether this placement is feasible.
+full_mask         : The mask which indicates whether this node should be encode by GAT.
+'''
 def observation_decode_leaf_node(observation, internal_node_holder, internal_node_length, leaf_node_holder):
     internal_nodes = observation[:, 0:internal_node_holder, 0:internal_node_length]
     leaf_nodes = observation[:, internal_node_holder:internal_node_holder + leaf_node_holder, 0:8]
@@ -110,46 +129,43 @@ def load_policy(load_path, upper_policy):
 
 def get_args():
     parser = argparse.ArgumentParser(description='PCT arguments')
-    # parser.add_argument('--id', type=str, default='PctDiscrete-v0', help='Experiment ID, discrete or continuous verision')
-    parser.add_argument('--setting', type=int, default=2, help='Experiment ID')
+    parser.add_argument('--setting', type=int, default=2, help='Experiment setting, please see our paper for details')
     parser.add_argument('--internal-node-holder', type=int, default=80, help='Maximum number of internal nodes')
     parser.add_argument('--leaf-node-holder', type=int, default=50, help='Maximum number of leaf nodes')
     parser.add_argument('--shuffle',type=bool, default=True, help='Randomly shuffle the leaf nodes')
     parser.add_argument('--continuous', action='store_true', help='Use continuous enviroment, otherwise the enviroment is discrete')
 
     parser.add_argument('--no-cuda',action='store_true', help='Forbidden cuda')
-    parser.add_argument('--device', type=int, default=0, help='Which GPU card will be called')
-    parser.add_argument('--seed', type=int, default=4, help='Random seed')
+    parser.add_argument('--device', type=int, default=0, help='Which GPU will be called')
+    parser.add_argument('--seed',   type=int, default=4, help='Random seed')
 
-    parser.add_argument('--use-acktr', type=bool, default=True, help='Use acktr, otherwise a2c')
-    parser.add_argument('--num-processes', type=int, default=64, help='How many parallel processes will be invoked for training')
-    parser.add_argument('--num-steps', type=int, default=5, help='The rollout length')
-    parser.add_argument('--learning-rate', type=float, default=1e-6, metavar='η', help='Learning rate, only works for a2c')
-    parser.add_argument('--actor-loss-coef',        type=float, default=1.0, help='')
-    parser.add_argument('--critic-loss-coef',       type=float, default=1.0, help='')
-    parser.add_argument('--max-grad-norm',          type=float, default=0.5   , help='Max norm of gradients')
-    parser.add_argument('--embedding-size',     type=int, default=64,  help='Size of input embedding')
-    parser.add_argument('--hidden-size',        type=int, default=128, help='Size of hidden layers')
-    parser.add_argument('--gat-layer-num',      type=int, default=1, help='How many GAT layers')
+    parser.add_argument('--use-acktr', type=bool, default=True, help='Use acktr, otherwise A2C')
+    parser.add_argument('--num-processes', type=int, default=64, help='The number of parallel processes used for training')
+    parser.add_argument('--num-steps', type=int, default=5, help='The rollout length for n-step training')
+    parser.add_argument('--learning-rate', type=float, default=1e-6, metavar='η', help='Learning rate, only works for A2C')
+    parser.add_argument('--actor-loss-coef',        type=float, default=1.0, help='The coefficient of actor loss')
+    parser.add_argument('--critic-loss-coef',       type=float, default=1.0, help='The coefficient of critic loss')
+    parser.add_argument('--max-grad-norm',          type=float, default=0.5, help='Max norm of gradients')
+    parser.add_argument('--embedding-size',     type=int, default=64,  help='Dimension of input embedding')
+    parser.add_argument('--hidden-size',        type=int, default=128, help='Dimension of hidden layers')
+    parser.add_argument('--gat-layer-num',      type=int, default=1, help='The number GAT layers')
     parser.add_argument('--gamma', type=float, default=1.0, metavar='γ', help='Discount factor')
 
     parser.add_argument('--model-save-interval',    type=int,   default=200   , help='How often to save the model')
-    parser.add_argument('--model-update-interval',  type=int,   default=20e30 , help='How often to save a new model')
+    parser.add_argument('--model-update-interval',  type=int,   default=20e30 , help='How often to create a new model')
     parser.add_argument('--model-save-path',type=str, default='./logs/experiment', help='The path to save the trained model')
     parser.add_argument('--print-log-interval',     type=int,   default=10, help='How often to print training logs')
 
     parser.add_argument('--evaluate', action='store_true', help='Evaluate only')
-    parser.add_argument('--evaluation-episodes', type=int, default=100, metavar='N', help='Number of evaluation episodes to average over')
+    parser.add_argument('--evaluation-episodes', type=int, default=100, metavar='N', help='Number of episodes evaluated')
     parser.add_argument('--load-model', action='store_true', help='Load the trained model')
     parser.add_argument('--model-path', type=str, help='The path to load model')
     parser.add_argument('--load-dataset', action='store_true', help='Load an existing dataset, otherwise the data is generated on the fly')
     parser.add_argument('--dataset-path', type=str, help='The path to load dataset')
 
-    parser.add_argument('--sample-from-distribution', action='store_true', help='Sample continuous item size from a uniform distribution U(a,b), otherwise sample items from \'item_size_set\' in \'givenData.py\'.')
+    parser.add_argument('--sample-from-distribution', action='store_true', help='Sample continuous item size from a uniform distribution U(a,b), otherwise sample items from \'item_size_set\' in \'givenData.py\'')
     parser.add_argument('--sample-left-bound', type=float, metavar='a', help='The parametre a of distribution U(a,b)')
     parser.add_argument('--sample-right-bound', type=float, metavar='b', help='The parametre b of distribution U(a,b)')
-
-
 
     args = parser.parse_args()
 
@@ -174,22 +190,21 @@ def get_args():
     return args
 
 def get_args_heuristic():
-    parser = argparse.ArgumentParser(description='PCT arguments')
-    parser.add_argument('--continuous', action='store_true', help='Use continuous enviroment, otherwise the enviroment is discrete')
+    parser = argparse.ArgumentParser(description='Heuristic baseline arguments')
 
-    parser.add_argument('--setting', type=int, default=3, help='Experiment ID')
-    parser.add_argument('--evaluate', action='store_true', help='Evaluate only')
-    parser.add_argument('--evaluation-episodes', type=int, default=10, metavar='N', help='Number of evaluation episodes to average over')
+    parser.add_argument('--continuous', action='store_true', help='Use continuous enviroment, otherwise the enviroment is discrete')
+    parser.add_argument('--setting', type=int, default=2, help='Experiment setting, please see our paper for details')
+    # parser.add_argument('--evaluate', action='store_true', help='Evaluate only')
+    parser.add_argument('--evaluation-episodes', type=int, default=10, metavar='N', help='Number of episodes evaluated')
     parser.add_argument('--load-dataset', action='store_true', help='Load an existing dataset, otherwise the data is generated on the fly')
     parser.add_argument('--dataset-path', type=str, help='The path to load dataset')
-
-    parser.add_argument('--heuristic', type=str, default='LSAH', help='LSAH DBL MACS OnlineBPH HM BR RANDOM')
+    parser.add_argument('--heuristic', type=str, default='LSAH', help='Options: LSAH DBL MACS OnlineBPH HM BR RANDOM')
 
 
     args = parser.parse_args()
-
     args.container_size = givenData.container_size
     args.item_size_set  = givenData.item_size_set
+    args.evaluate = True
 
     if args.continuous:
         assert args.heuristic == 'LSAH' or args.heuristic == 'OnlineBPH' or args.heuristic == 'BR'
@@ -202,6 +217,7 @@ def get_args_heuristic():
         args.internal_node_length = 7
     if args.evaluate:
         args.num_processes = 1
+    args.normFactor = 1.0 / np.max(args.container_size)
 
     return args
 

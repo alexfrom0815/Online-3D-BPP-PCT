@@ -82,10 +82,10 @@ python evaluation.py --evaluate --load-model --model-path path/to/your/model --l
 Running heuristic.py for test heuristic baselines, the source of the heuristic algorithm has been marked in the code:
 ```
 Running heuristic on setting 1 （discrete） with LASH method:
-python heuristic.py --setting 1 --heuristic LSAH --evaluate --load-dataset  --dataset-path setting123_discrete.pt
+python heuristic.py --setting 1 --heuristic LSAH --load-dataset  --dataset-path setting123_discrete.pt
 
 Running heuristic on setting 2 （continuous） with OnlineBPH method:
-python heuristic.py --continuous --setting 2 --heuristic OnlineBPH --evaluate --load-dataset  --dataset-path setting2_continuous.pt
+python heuristic.py --continuous --setting 2 --heuristic OnlineBPH --load-dataset  --dataset-path setting2_continuous.pt
 ```
 
 ### Help

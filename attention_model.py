@@ -7,10 +7,6 @@ from distributions import FixedCategorical
 from tools import observation_decode_leaf_node, init
 
 class AttentionModelFixed(NamedTuple):
-    """
-    Context for AttentionModel decoder that is fixed during decoding so can be precomputed/cached
-    This class allows for efficient indexing of multiple Tensors at once
-    """
     node_embeddings: torch.Tensor
     context_node_projected: torch.Tensor
     glimpse_key: torch.Tensor
@@ -80,6 +76,7 @@ class AttentionModel(nn.Module):
             activate(),
             init_(nn.Linear(32, embedding_dim)))
 
+        # Graph attention model
         self.embedder = GraphAttentionEncoder(
             n_heads=n_heads,
             embed_dim=embedding_dim,
@@ -92,6 +89,7 @@ class AttentionModel(nn.Module):
         assert embedding_dim % n_heads == 0
 
     def forward(self, input, deterministic = False, evaluate_action = False, normFactor = 1, evaluate = False):
+
         internal_nodes, leaf_nodes, next_item, invalid_leaf_nodes, full_mask = observation_decode_leaf_node(input,
                                                                                                             self.internal_node_holder,
                                                                                                             self.internal_node_length,
@@ -110,14 +108,18 @@ class AttentionModel(nn.Module):
         leaf_inputs = leaf_nodes.contiguous().view(batch_size * leaf_node_size, 8)*normFactor
         current_inputs = next_item.contiguous().view(batch_size * next_size, 6)*normFactor
 
+        # We use three independent node-wise Multi-Layer Perceptron (MLP) blocks to project these raw space configuration nodes
+        # presented by descriptors in different formats into the homogeneous node features.
         internal_embedded_inputs = self.init_internal_node_embed(internal_inputs).reshape((batch_size, -1, self.embedding_dim))
         leaf_embedded_inputs = self.init_leaf_node_embed(leaf_inputs).reshape((batch_size, -1, self.embedding_dim))
         next_embedded_inputs = self.init_next_embed(current_inputs.squeeze()).reshape(batch_size, -1, self.embedding_dim)
         init_embedding = torch.cat((internal_embedded_inputs, leaf_embedded_inputs, next_embedded_inputs), dim=1).view(batch_size * graph_size, self.embedding_dim)
 
+        # transform init_embedding into high-level node features.
         embeddings, _ = self.embedder(init_embedding, mask = full_mask, evaluate = evaluate)
         embedding_shape = (batch_size, graph_size, embeddings.shape[-1])
-
+        
+        # Decide the leaf node indices for accommodating the current item
         log_p, action_log_prob, pointers, dist_entropy, dist, hidden = self._inner(embeddings,
                                                           deterministic=deterministic,
                                                           evaluate_action=evaluate_action,
@@ -128,10 +130,12 @@ class AttentionModel(nn.Module):
         return action_log_prob, pointers, dist_entropy, hidden, dist
 
     def _inner(self, embeddings, mask = None, deterministic = False, evaluate_action = False, shape = None, full_mask = None, valid_length =None): # 元素齐了
-
+        # The aggregation of global feature
         fixed = self._precompute(embeddings, shape = shape, full_mask = full_mask, valid_length = valid_length)
+        # Calculate probabilities of selecting leaf nodes
         log_p, mask = self._get_log_p(fixed, mask)
 
+        # The leaf node which is not feasible will be masked in a soft way.
         if deterministic:
             masked_outs = log_p * (1 - mask)
             if torch.sum(masked_outs) == 0:
@@ -145,8 +149,10 @@ class AttentionModel(nn.Module):
 
         # Get maximum probabilities and indices
         if deterministic:
+            # We take the argmax of the policy for the test.
             selected = dist.mode()
         else:
+            # The action at is sampled from the distribution for training
             selected = dist.sample()
 
         if not evaluate_action:
@@ -158,8 +164,7 @@ class AttentionModel(nn.Module):
         return log_p, action_log_probs, selected, dist_entropy, dist, fixed.context_node_projected
 
     def _precompute(self, embeddings, num_steps=1, shape = None, full_mask = None, valid_length = None):
-
-        # The fixed context projection of the graph embedding is calculated only once for efficiency
+        # The aggregation of global feature, only happens on the eligible nodes.
         transEmbedding = embeddings.view(shape)
         full_mask = full_mask.view(shape[0], shape[1],1).expand(shape).bool()
         transEmbedding[full_mask]  = 0
