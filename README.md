@@ -5,6 +5,16 @@
 **I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
 
 We propose to enhance the practical applicability of online 3D-BPP via learning on a hierarchical packing configuration tree which makes the DRL model easy to deal with practical constraints and well-performing even with continuous solution space.
+ Compared to our previous work, the advantages of this repo are:
+- [x] Container (bin) size and item sizes can be set arbitrarily.
+- [x] Continuous online 3D-BPP is allowed and the continuous environment is provided.
+- [x] Algorithms to approximate stability are provided ([see our other work](https://arxiv.org/abs/2108.13680v2)). 
+- [x] Better performance and the ability to account for more complex constraints.
+- [x] More adequate heuristic baselines for domain development.
+- [x] More stable training.
+- [x] No need to manually register gym anymore.
+
+If you are interested, please star this repo!
 
 ![PCT](images/packingtree2D.png)
 
@@ -52,7 +62,7 @@ You can download the prepared dataset from [here](https://drive.google.com/drive
 The dataset consists of 3000 randomly generated trajectories, each with 150 items. The item is a vector of length 3 or 4, the first three numbers of the item represent the size of the item, the fourth number (if any) represents the density of the item.
 
 ### Model
-We provide [pretrained models](https://drive.google.com/drive/folders/14PC3aVGiYZU5AaGdNM9YOVdp8pPiZ3fe?usp=sharing) trained using the EMS scheme in a discrete environment, where the bin size is (10,10,10) and item size range from 1 to 5.
+We provide [pretrained models](https://drive.google.com/drive/folders/14PC3aVGiYZU5AaGdNM9YOVdp8pPiZ3fe?usp=sharing) trained using the EMS scheme in a discrete environment, where the bin size is (10,10,10) and the item size range from 1 to 5.
 
 ### Training
 
