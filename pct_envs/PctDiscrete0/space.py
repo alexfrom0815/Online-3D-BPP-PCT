@@ -388,6 +388,8 @@ class Space(object):
             return True
         return False
 
+    # Virtually place an item into the bin,
+    # this function is used to check whether the placement is feasible for the current item
     def drop_box_virtual(self, box_size, idx, flag, density, setting,  returnH = False, returnMap = False):
         if not flag:
             x, y, z = box_size
@@ -430,6 +432,7 @@ class Space(object):
         else:
             return self.check_box(x, y, lx, ly, z, max_h, box_now, setting, True)
 
+    # Check if the placement is feasible
     def check_box(self, x, y, lx, ly, z, max_h, box_now, setting, virtual=False):
         assert isinstance(setting, int)
         if lx + x > self.plain_size[0] or ly + y > self.plain_size[1]:
@@ -450,6 +453,7 @@ class Space(object):
             else:
                 return box_now.calculated_impact_virtual(True)
 
+    # Calculate the incrementally generated empty maximal spaces during the packing.
     def GENEMS(self, itemLocation):
         numofemss = len(self.EMS)
         delflag = []
@@ -490,6 +494,7 @@ class Space(object):
         if cz_max < self.plain_size[2]:
             AddNewEMSZ(itemLocation, self)
 
+    # Split an EMS when it intersects a placed item
     def Difference(self, emsID, intersection):
         x1, y1, z1, x2, y2, z2 = self.EMS[emsID]
         x3, y3, z3, x4, y4, z4, = intersection
@@ -509,6 +514,7 @@ class Space(object):
     def AddNewEMS(self, a, b, c, x, y, z):
         self.EMS.append(np.array([a, b, c, x, y, z]))
 
+    # Eliminate redundant ems
     def EliminateInscribedEMS(self):
         NOEMS = len(self.EMS)
         delflags = np.zeros(NOEMS)
@@ -524,7 +530,7 @@ class Space(object):
         self.EMS = [self.EMS[i] for i in range(NOEMS) if delflags[i] != 1]
         return len(self.EMS)
 
-    #######################################################################################
+    # Convert EMS to placement (leaf node) for the current item.
     def EMSPoint(self, next_box, setting):
         posVec = set()
         if setting == 2: orientation = 6
@@ -563,7 +569,7 @@ class Space(object):
         posVec = np.array(list(posVec))
         return posVec
 
-    #######################################################################################
+    # Find all placement that can accommodate the current item in the full coordinate space
     def FullCoord(self, next_box, setting):
         posVec = set()
         if setting == 2: orientation = 6

@@ -20,17 +20,19 @@ class PackingDiscrete(gym.Env):
         self.shuffle = shuffle
         self.bin_size = container_size
         self.size_minimum = np.min(np.array(item_set))
-        self.space = Space(*self.bin_size, self.size_minimum, self.internal_node_holder)
         self.setting = setting
         self.item_set = item_set
         if self.setting == 2: self.orientation = 6
         else: self.orientation = 2
+        
+        # The class that maintains the contents of the bin.
+        self.space = Space(*self.bin_size, self.size_minimum, self.internal_node_holder)
 
+        # Generator for train/test data
         if not load_test_data:
             assert item_set is not None
             self.box_creator = RandomBoxCreator(item_set)
             assert isinstance(self.box_creator, BoxCreator)
-
         if load_test_data:
             self.box_creator = LoadBoxCreator(data_name)
 
@@ -50,6 +52,7 @@ class PackingDiscrete(gym.Env):
             self.SEED = seed
         return [seed]
 
+    # Calculate space utilization inside a bin.
     def get_box_ratio(self):
         coming_box = self.next_box
         return (coming_box[0] * coming_box[1] * coming_box[2]) / (self.space.plain_size[0] * self.space.plain_size[1] * self.space.plain_size[2])
@@ -62,6 +65,7 @@ class PackingDiscrete(gym.Env):
         cur_observation = self.cur_observation()
         return cur_observation
 
+    # Count and return all PCT nodes.
     def cur_observation(self):
         boxes = []
         leaf_nodes = []
@@ -87,9 +91,11 @@ class PackingDiscrete(gym.Env):
         self.next_box_vec[:, -1] = 1
         return np.reshape(np.concatenate((*boxes, *leaf_nodes, self.next_box_vec)), (-1))
 
+    # Generate the next item to be placed.
     def gen_next_box(self):
         return self.box_creator.preview(1)[0]
 
+    # Detect potential leaf nodes and check their feasibility.
     def get_possible_position(self):
         if   self.LNES == 'EMS':
             allPostion = self.space.EMSPoint(self.next_box,  self.setting)
@@ -122,6 +128,7 @@ class PackingDiscrete(gym.Env):
 
         return leaf_node_vec
 
+    # Convert the selected leaf node to the placement of the current item.
     def LeafNode2Action(self, leaf_node):
         if np.sum(leaf_node[0:6]) == 0: return (0, 0, 0), self.next_box
         x = int(leaf_node[3] - leaf_node[0])
