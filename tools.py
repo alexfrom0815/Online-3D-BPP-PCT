@@ -106,7 +106,7 @@ def observation_decode_leaf_node(observation, internal_node_holder, internal_nod
 
 def load_policy(load_path, upper_policy):
     print(load_path)
-    assert os.path.exists(load_path)
+    assert os.path.exists(load_path), 'File does not exist'
     pretrained_state_dict = torch.load(load_path, map_location='cpu')
     if len(pretrained_state_dict) == 2:
         pretrained_state_dict, ob_rms = pretrained_state_dict
@@ -130,6 +130,7 @@ def load_policy(load_path, upper_policy):
 def get_args():
     parser = argparse.ArgumentParser(description='PCT arguments')
     parser.add_argument('--setting', type=int, default=2, help='Experiment setting, please see our paper for details')
+    parser.add_argument('--lnes', type=str, default='EMS', help='Leaf Node Expansion Schemes: EMS (recommend), EV, EP, CP, FC')
     parser.add_argument('--internal-node-holder', type=int, default=80, help='Maximum number of internal nodes')
     parser.add_argument('--leaf-node-holder', type=int, default=50, help='Maximum number of leaf nodes')
     parser.add_argument('--shuffle',type=bool, default=True, help='Randomly shuffle the leaf nodes')
@@ -207,7 +208,7 @@ def get_args_heuristic():
     args.evaluate = True
 
     if args.continuous:
-        assert args.heuristic == 'LSAH' or args.heuristic == 'OnlineBPH' or args.heuristic == 'BR'
+        assert args.heuristic == 'LSAH' or args.heuristic == 'OnlineBPH' or args.heuristic == 'BR', 'only LSAH, OnlineBPH, and BR allowed for continuous environment'
 
     if args.setting == 1:
         args.internal_node_length = 6

@@ -40,6 +40,7 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets, args):
                            load_test_data = args.load_dataset,
                            internal_node_holder = args.internal_node_holder,
                            leaf_node_holder = args.leaf_node_holder,
+                           LNES = args.lnes,
                            shuffle = args.shuffle,
                            sample_from_distribution = args.sample_from_distribution,
                            sample_left_bound = args.sample_left_bound,

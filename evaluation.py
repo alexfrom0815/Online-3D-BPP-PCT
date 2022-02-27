@@ -33,6 +33,7 @@ def main(args):
                     load_test_data = args.load_dataset,
                     internal_node_holder=args.internal_node_holder,
                     leaf_node_holder=args.leaf_node_holder,
+                    LNES = args.lnes,
                     shuffle=args.shuffle)
 
     # Create the main actor & critic networks of PCT
