@@ -12,7 +12,6 @@ We propose to enhance the practical applicability of online 3D-BPP via learning 
 
 ![PCT](images/packingtree2D.png)
 
-
 ## Paper
 For more details, please see our paper [Learning Efficient Online 3D Bin Packing on Packing Configuration Trees](https://openreview.net/forum?id=bfuGjlCwAq) which has been accepted at [ICLR 2022](https://iclr.cc/Conferences/2022). If this code is useful for your work, please cite our paper:
 
@@ -71,7 +70,7 @@ python main.py --continuous --setting 1 --internal-node-holder 80 --leaf-node-ho
 #### Warm start
 You can initialize a run using a pretrained model:
 ```bash
-python main.py --load-model --model-path path/to/your model
+python main.py --load-model --model-path path/to/your/model
 ```
 
 ### Evaluation
