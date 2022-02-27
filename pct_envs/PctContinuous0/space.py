@@ -426,7 +426,7 @@ class Space(object):
 
     # Check if the placement is feasible
     def check_box(self, max_h, box_now, setting, virtual=False):
-        assert isinstance(setting, int)
+        assert isinstance(setting, int), 'The environment setting should be integer.'
         if setting == 2:
             return True
         else:
@@ -539,23 +539,23 @@ class Space(object):
                     sizex, sizey, sizez = next_box[0], next_box[1], next_box[2]
                 elif rot == 1:
                     sizex, sizey, sizez = next_box[1], next_box[0], next_box[2]
-                    if sizex == sizey:
+                    if abs(sizex - sizey) < 1e-6:
                         continue
                 elif rot == 2:
                     sizex, sizey, sizez = next_box[0], next_box[2], next_box[1]
-                    if sizex == sizey and sizey == sizez:
+                    if abs(sizex - sizey) < 1e-6 and abs(sizey - sizez) < 1e-6:
                         continue
                 elif rot == 3:
                     sizex, sizey, sizez = next_box[1], next_box[2], next_box[0]
-                    if sizex == sizey and sizey == sizez:
+                    if abs(sizex - sizey) < 1e-6 and abs(sizey - sizez) < 1e-6:
                         continue
                 elif rot == 4:
                     sizex, sizey, sizez = next_box[2], next_box[0], next_box[1]
-                    if sizex == sizey:
+                    if abs(sizex - sizey) < 1e-6:
                         continue
                 elif rot == 5:
                     sizex, sizey, sizez = next_box[2], next_box[1], next_box[0]
-                    if sizex == sizey:
+                    if abs(sizex - sizey) < 1e-6:
                         continue
 
                 if ems[3] - ems[0] + 1e-6 >= sizex and ems[4] - ems[1] + 1e-6 >= sizey and ems[5] - ems[
@@ -565,6 +565,88 @@ class Space(object):
                     posVec.add((ems[0], ems[4] - sizey, ems[2], ems[0] + sizex, ems[4], ems[2] + sizez))
                     posVec.add((ems[3] - sizex, ems[4] - sizey, ems[2], ems[3], ems[4], ems[2] + sizez))
         posVec = np.array(list(posVec))
-        # tmpVec = np.around(posVec, 6)
         return posVec
 
+    def EventPoint(self, next_box, setting):
+            allPostion = []
+            if setting == 2: orientation = 6
+            else: orientation = 2
+            for k in self.ZMAP.keys():
+                posVec = set()
+                validEms = []
+
+                for emsIdx in range(self.NOEMS):
+                    ems = self.EMS[emsIdx]
+                    if abs(ems[2] - k) < 1e-6:
+                        validEms.append([ems[0], ems[1], -1, ems[3], ems[4], -1])
+
+                if len(validEms) == 0:
+                    continue
+                validEms = np.array(validEms)
+                r = self.ZMAP[k]
+
+                for rot in range(orientation): # 0 x y z, 1 y x z, 2 x z y,  3 y z x, 4 z x y, 5 z y x
+                    if rot == 0:
+                        sizex, sizey, sizez = next_box[0], next_box[1], next_box[2]
+                    elif rot == 1:
+                        sizex, sizey, sizez = next_box[1], next_box[0], next_box[2]
+                        if abs(sizex - sizey) < 1e-6:
+                            continue
+                    elif rot == 2:
+                        sizex, sizey, sizez = next_box[0], next_box[2], next_box[1]
+                        if abs(sizex - sizey) < 1e-6 and abs(sizey - sizez) < 1e-6:
+                            continue
+                    elif rot == 3:
+                        sizex, sizey, sizez = next_box[1], next_box[2], next_box[0]
+                        if abs(sizex - sizey) < 1e-6 and abs(sizey - sizez) < 1e-6:
+                            continue
+                    elif rot == 4:
+                        sizex, sizey, sizez = next_box[2], next_box[0], next_box[1]
+                        if abs(sizex - sizey) < 1e-6:
+                            continue
+                    elif rot == 5:
+                        sizex, sizey, sizez = next_box[2], next_box[1], next_box[0]
+                        if abs(sizex - sizey) < 1e-6:
+                            continue
+
+                    for xs in r['x_up']:
+                        for ys in r['y_left']:
+                            xe = xs + sizex
+                            ye = ys + sizey
+                            posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+                        for ye in r['y_right']:
+                            ys = ye - sizey
+                            xe = xs + sizex
+                            posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+                    for xe in r['x_bottom']:
+                        xs = xe - sizex
+                        for ys in r['y_left']:
+                            ye = ys + sizey
+                            posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+                        for ye in r['y_right']:
+                            ys = ye - sizey
+                            posVec.add((xs, ys, k, xe, ye, k + sizez))
+                posVec = np.array(list(posVec))
+                emsSize = validEms.shape[0]
+
+                cmpPos = posVec.repeat(emsSize, axis=0)
+
+                cmpPos = cmpPos.reshape((-1, *validEms.shape))
+                cmpPos = cmpPos - validEms
+
+                cmpPos[:, :, 3] *= -1
+                cmpPos[:, :, 4] *= -1
+                cmpPos = np.where(cmpPos + 1e-6 > 0, 1, 0)
+
+                cmpPos = cmpPos.cumprod(axis=2)
+                cmpPos = cmpPos[:, :, -1]
+                cmpPos = np.sum(cmpPos, axis=1)
+                validIdx = np.argwhere(cmpPos > 0)
+                tmpVec = np.around(posVec[validIdx, :].squeeze(axis=1), 6)
+                if len(tmpVec) != 0:
+                    tmpVec = np.unique(tmpVec, axis=0)
+                allPostion.extend(tmpVec.tolist())
+            return allPostion  #
