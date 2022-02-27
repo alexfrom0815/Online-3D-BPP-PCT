@@ -11,6 +11,7 @@ class PackingDiscrete(gym.Env):
                  container_size=(10, 10, 10),
                  item_set=None, data_name=None, load_test_data=False,
                  internal_node_holder=80, leaf_node_holder=50, next_holder=1, shuffle=False,
+                 LNES = 'EMS',
                  **kwags):
 
         self.internal_node_holder = internal_node_holder
@@ -41,7 +42,7 @@ class PackingDiscrete(gym.Env):
                                                 shape=((self.internal_node_holder + self.leaf_node_holder + self.next_holder) * 9,))
         self.next_box_vec = np.zeros((self.next_holder, 9))
 
-        self.LNES = 'EMS'  # Leaf Node Expansion Schemes: EMS FULL
+        self.LNES = LNES  # Leaf Node Expansion Schemes: EMS (recommend), EV, EP, CP, FC
 
     def seed(self, seed=None):
         if seed is not None:
@@ -99,10 +100,16 @@ class PackingDiscrete(gym.Env):
     def get_possible_position(self):
         if   self.LNES == 'EMS':
             allPostion = self.space.EMSPoint(self.next_box,  self.setting)
-        elif self.LNES == 'FULL':
+        elif self.LNES == 'EV':
+            allPostion = self.space.EventPoint(self.next_box,  self.setting)
+        elif self.LNES == 'EP':
+            allPostion = self.space.ExtremePoint2D(self.next_box, self.setting)
+        elif self.LNES == 'CP':
+            allPostion = self.space.CornerPoint(self.next_box, self.setting)
+        elif self.LNES == 'FC':
             allPostion = self.space.FullCoord(self.next_box, self.setting)
         else:
-            assert False
+            assert False, 'Wrong LNES'
 
         if self.shuffle:
             np.random.shuffle(allPostion)

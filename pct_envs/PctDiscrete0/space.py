@@ -2,7 +2,7 @@ import numpy as np
 from functools import reduce
 import copy
 from .convex_hull import ConvexHull, point_in_polygen
-from .PctTools import AddNewEMSZ, maintainEventBottom
+from .PctTools import AddNewEMSZ, maintainEventBottom, smallBox, extreme2D, corners2D
 
 class Stack(object):
     def __init__(self, centre, mass):
@@ -434,7 +434,7 @@ class Space(object):
 
     # Check if the placement is feasible
     def check_box(self, x, y, lx, ly, z, max_h, box_now, setting, virtual=False):
-        assert isinstance(setting, int)
+        assert isinstance(setting, int), 'The environment setting should be integer.'
         if lx + x > self.plain_size[0] or ly + y > self.plain_size[1]:
             return False
         if lx < 0 or ly < 0:
@@ -606,5 +606,201 @@ class Space(object):
                             and lz + sizez <= self.plain_size[2]:
                         posVec.add((lx, ly, lz, lx + sizex, ly + sizey, lz + sizez))
 
+        posVec = np.array(list(posVec))
+        return posVec
+
+    # Find event points.
+    def EventPoint(self, next_box, setting):
+        if setting == 2: orientation = 6
+        else: orientation = 2
+
+        allPostion = []
+        for k in self.ZMAP.keys():
+            posVec = set()
+            validEms = []
+            for ems in self.EMS:
+                if ems[2] == k:
+                    validEms.append([ems[0], ems[1], -1, ems[3], ems[4], -1])
+            if len(validEms) == 0:
+                continue
+            validEms = np.array(validEms)
+            r = self.ZMAP[k]
+
+            for rot in range(orientation):  # 0 x y z, 1 y x z, 2 x z y,  3 y z x, 4 z x y, 5 z y x
+                if rot == 0:
+                    sizex, sizey, sizez = next_box[0], next_box[1], next_box[2]
+                elif rot == 1:
+                    sizex, sizey, sizez = next_box[1], next_box[0], next_box[2]
+                    if sizex == sizey:
+                        continue
+                elif rot == 2:
+                    sizex, sizey, sizez = next_box[0], next_box[2], next_box[1]
+                    if sizex == sizey and sizey == sizez:
+                        continue
+                elif rot == 3:
+                    sizex, sizey, sizez = next_box[1], next_box[2], next_box[0]
+                    if sizex == sizey and sizey == sizez:
+                        continue
+                elif rot == 4:
+                    sizex, sizey, sizez = next_box[2], next_box[0], next_box[1]
+                    if sizex == sizey:
+                        continue
+                elif rot == 5:
+                    sizex, sizey, sizez = next_box[2], next_box[1], next_box[0]
+                    if sizex == sizey:
+                        continue
+
+                check_list = []
+
+                for xs in r['x_up']:
+                    for ys in r['y_left']:
+                        xe = xs + sizex
+                        ye = ys + sizey
+                        posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+                    for ye in r['y_right']:
+                        ys = ye - sizey
+                        xe = xs + sizex
+                        posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+                for xe in r['x_bottom']:
+                    xs = xe - sizex
+                    for ys in r['y_left']:
+                        ye = ys + sizey
+                        posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+                    for ye in r['y_right']:
+                        ys = ye - sizey
+                        posVec.add((xs, ys, k, xe, ye, k + sizez))
+
+            posVec  = np.array(list(posVec))
+            emsSize = validEms.shape[0]
+
+            cmpPos = posVec.repeat(emsSize, axis=0)
+            cmpPos = cmpPos.reshape((-1, *validEms.shape))
+            cmpPos = cmpPos - validEms
+            cmpPos[:, :, 3] *= -1
+            cmpPos[:, :, 4] *= -1
+            cmpPos[cmpPos >= 0] = 1
+            cmpPos[cmpPos < 0] = 0
+            cmpPos = cmpPos.cumprod(axis=2)
+            cmpPos = cmpPos[:, :, -1]
+            cmpPos = np.sum(cmpPos, axis=1)
+            validIdx = np.argwhere(cmpPos > 0)
+            tmpVec = posVec[validIdx, :].squeeze(axis=1)
+            allPostion.extend(tmpVec.tolist())
+
+        return allPostion
+
+    # Find extre empoints on each distinct two-dimensional plane.
+    def ExtremePoint2D(self, next_box, setting):
+        if setting == 2: orientation = 6
+        else: orientation = 2
+        cboxList = self.boxes
+        if len(cboxList) == 0: return [(0, 0, 0, next_box[0], next_box[1], next_box[2]),
+                                       (0, 0, 0, next_box[1], next_box[0], next_box[2])]
+        Tset = {0}
+        for box in cboxList:
+            Tset.add(box.z + box.lz)
+        Tset = sorted(list(Tset))
+
+        CI = []
+        lastCik = []
+        for k in Tset:
+            IK = []
+            for box in cboxList:
+                if box.lz + box.z > k:
+                    IK.append(smallBox(box.lx, box.ly, box.lx + box.x, box.ly + box.y))
+            Cik = extreme2D(IK)
+            for p in Cik:
+                if p not in lastCik:
+                    CI.append((p[0], p[1], k))
+            lastCik = copy.deepcopy(Cik)
+
+        posVec = set()
+        for pos in CI:
+            for rot in range(orientation):  # 0 x y z, 1 y x z, 2 x z y,  3 y z x, 4 z x y, 5 z y x
+                if rot == 0:
+                    sizex, sizey, sizez = next_box[0], next_box[1], next_box[2]
+                elif rot == 1:
+                    sizex, sizey, sizez = next_box[1], next_box[0], next_box[2]
+                    if sizex == sizey:
+                        continue
+                elif rot == 2:
+                    sizex, sizey, sizez = next_box[0], next_box[2], next_box[1]
+                    if sizex == sizey and sizey == sizez:
+                        continue
+                elif rot == 3:
+                    sizex, sizey, sizez = next_box[1], next_box[2], next_box[0]
+                    if sizex == sizey and sizey == sizez:
+                        continue
+                elif rot == 4:
+                    sizex, sizey, sizez = next_box[2], next_box[0], next_box[1]
+                    if sizex == sizey:
+                        continue
+                elif rot == 5:
+                    sizex, sizey, sizez = next_box[2], next_box[1], next_box[0]
+                    if sizex == sizey:
+                        continue
+
+                if pos[0] + sizex <= self.plain_size[0] and pos[1] + sizey <= self.plain_size[1] \
+                        and pos[2] + sizez <= self.plain_size[2]:
+                    posVec.add((pos[0], pos[1], pos[2], pos[0] + sizex, pos[1] + sizey, pos[2] + sizez))
+        posVec = np.array(list(posVec))
+        return posVec
+
+    def CornerPoint(self, next_box, setting):
+        if setting == 2: orientation = 6
+        else: orientation = 2
+        cboxList = self.boxes
+        if len(cboxList) == 0: return [(0, 0, 0, next_box[0], next_box[1], next_box[2]),
+                                       (0, 0, 0, next_box[1], next_box[0], next_box[2])]
+        Tset = {0}
+        for box in cboxList:
+            Tset.add(box.z + box.lz)
+        Tset = sorted(list(Tset))
+
+        CI = []
+        lastCik = []
+        for k in Tset:
+            IK = []
+            for box in cboxList:
+                if box.lz + box.z > k:
+                    IK.append((box.lx, box.ly, box.lx + box.x, box.ly + box.y))
+            Cik = corners2D(IK)
+            for p in Cik:
+                if p not in lastCik:
+                    CI.append((p[0], p[1], k))
+            lastCik = copy.deepcopy(Cik)
+
+        posVec = set()
+        for pos in CI:
+            for rot in range(orientation):  # 0 x y z, 1 y x z, 2 x z y,  3 y z x, 4 z x y, 5 z y x
+                if rot == 0:
+                    sizex, sizey, sizez = next_box[0], next_box[1], next_box[2]
+                elif rot == 1:
+                    sizex, sizey, sizez = next_box[1], next_box[0], next_box[2]
+                    if sizex == sizey:
+                        continue
+                elif rot == 2:
+                    sizex, sizey, sizez = next_box[0], next_box[2], next_box[1]
+                    if sizex == sizey and sizey == sizez:
+                        continue
+                elif rot == 3:
+                    sizex, sizey, sizez = next_box[1], next_box[2], next_box[0]
+                    if sizex == sizey and sizey == sizez:
+                        continue
+                elif rot == 4:
+                    sizex, sizey, sizez = next_box[2], next_box[0], next_box[1]
+                    if sizex == sizey:
+                        continue
+                elif rot == 5:
+                    sizex, sizey, sizez = next_box[2], next_box[1], next_box[0]
+                    if sizex == sizey:
+                        continue
+
+                if pos[0] + sizex <= self.plain_size[0] and pos[1] + sizey <= self.plain_size[1] \
+                        and pos[2] + sizez <= self.plain_size[2]:
+                    posVec.add((pos[0], pos[1], pos[2], pos[0] + sizex, pos[1] + sizey, pos[2] + sizez))
         posVec = np.array(list(posVec))
         return posVec
