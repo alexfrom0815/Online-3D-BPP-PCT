@@ -273,7 +273,7 @@ class Space(object):
         self.upLetter = np.zeros((holder, 5))
         self.box_vec = np.zeros((holder, 9))
         self.firstEMS = np.array([0, 0, 0, *self.plain_size])
-        self.EMS = np.zeros((300, 6))
+        self.EMS = np.zeros((1000, 6))
         self.NOEMS  = 1
         self.reset()
 
@@ -375,6 +375,8 @@ class Space(object):
             return True
         return False
 
+    # Virtually place an item into the bin,
+    # this function is used to check whether the placement is feasible for the current item
     def drop_box_virtual(self, box_size, idx, flag, density, setting, returnH = False, **kwargs):
         if not flag:
             x, y, z = box_size
@@ -422,7 +424,7 @@ class Space(object):
         else:
             return checkResult and self.check_box(max_h, box_now, setting, True)
 
-
+    # Check if the placement is feasible
     def check_box(self, max_h, box_now, setting, virtual=False):
         assert isinstance(setting, int)
         if setting == 2:
@@ -453,6 +455,7 @@ class Space(object):
         intersect[:, 0:3] *= -1
         return delindex, saveindex, intersect
 
+    # Calculate the incrementally generated empty maximal spaces during the packing.
     def GENEMS(self, itemLocation):
         originemss = self.NOEMS
         delflag, validflag, intersect = self.interSectEMS3D(np.array(itemLocation))
@@ -483,6 +486,7 @@ class Space(object):
         if cz_max < self.plain_size[2]:
             AddNewEMSZ(itemLocation, self)
 
+    # Split an EMS when it intersects a placed item
     def Difference(self, emsID, intersection):
         x1, y1, z1, x2, y2, z2 = self.EMS[emsID]
         x3, y3, z3, x4, y4, z4, = intersection
@@ -502,6 +506,7 @@ class Space(object):
         self.NOEMS += 1
 
     @staticmethod
+    # Eliminate redundant ems
     def EliminateInscribedEMS(NOEMS, EMS):
         delflags = np.zeros(NOEMS)
         for i in range(NOEMS):
@@ -522,6 +527,7 @@ class Space(object):
         NOEMS = validLength
         return NOEMS, EMS
 
+    # Convert EMS to placement (leaf node) for the current item.
     def EMSPoint(self, next_box, setting):
         posVec = set()
         if setting == 2: orientation = 6
