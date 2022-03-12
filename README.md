@@ -34,12 +34,11 @@ url={https://openreview.net/forum?id=bfuGjlCwAq}
 
 
 ## Dependencies
-
-* Python>=3.7
 * NumPy
-* [PyTorch](http://pytorch.org/)>=1.7
 * gym
-
+* Python>=3.7
+* [PyTorch](http://pytorch.org/) >=1.7
+* My suggestion: Python == 3.7, torch == 1.10
 ## Quick start
 
 For training online 3D-BPP on setting 2 (mentioned in our paper) with our PCT method and the default arguments:
