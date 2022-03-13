@@ -173,6 +173,11 @@ def get_args():
     args.container_size = givenData.container_size
     args.item_size_set  = givenData.item_size_set
 
+    if args.sample_from_distribution and args.sample_left_bound is None:
+        args.sample_left_bound = 0.1 * min(args.container_size)
+    if args.sample_from_distribution and args.sample_right_bound is None:
+        args.sample_right_bound = 0.5 * min(args.container_size)
+
     if args.continuous:
         args.id = 'PctContinuous-v0'
     else:
