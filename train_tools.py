@@ -39,6 +39,7 @@ class train_tools(object):
 
         obs = envs.reset()
         all_nodes, leaf_nodes = tools.get_leaf_nodes(obs, args.internal_node_holder, args.leaf_node_holder)
+        all_nodes, leaf_nodes = all_nodes.to(device), leaf_nodes.to(device)
         pct_rollout = PCTRolloutStorage(args.num_steps,
                                         args.num_processes,
                                         obs_shape=all_nodes.shape[1:],
