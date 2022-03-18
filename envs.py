@@ -5,7 +5,6 @@ from gym.spaces.box import Box
 
 from wrapper.benchmarks import *
 from wrapper.monitor import *
-from wrapper.atari_wrappers import make_atari, wrap_deepmind
 from wrapper.vec_env import VecEnvWrapper
 from wrapper.shmem_vec_env import ShmemVecEnv
 from wrapper.dummy_vec_env import DummyVecEnv
@@ -47,10 +46,6 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets, args):
                            sample_right_bound = args.sample_right_bound
                            )
 
-        is_atari = hasattr(gym.envs, 'atari') and isinstance(
-            env.unwrapped, gym.envs.atari.atari_env.AtariEnv)
-        if is_atari:
-            env = make_atari(env_id)
         env.seed(seed + rank)
 
         obs_shape = env.observation_space.shape
@@ -64,14 +59,10 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets, args):
                 os.path.join(log_dir, str(rank)),
                 allow_early_resets=allow_early_resets)
 
-        if is_atari:
-            if len(env.observation_space.shape) == 3:
-                env = wrap_deepmind(env)
-        elif len(env.observation_space.shape) == 3:
+        if len(env.observation_space.shape) == 3:
             raise NotImplementedError(
                 "CNN models work only for atari,\n"
-                "please use a custom wrapper for a custom pixel input env.\n"
-                "See wrap_deepmind for an example.")
+                "please use a custom wrapper for a custom pixel input env.\n")
 
         # If the input has shape (W,H,3), wrap for PyTorch convolutions
         obs_shape = env.observation_space.shape
@@ -184,4 +175,3 @@ class VecPyTorch(VecEnvWrapper):
         obs = torch.from_numpy(np.array(obs)).float().to(self.device)
         reward = torch.from_numpy(reward).unsqueeze(dim=1).float()
         return obs, reward, done, info
-
