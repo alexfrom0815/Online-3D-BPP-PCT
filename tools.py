@@ -170,6 +170,8 @@ def get_args():
 
     args = parser.parse_args()
 
+    if args.no_cuda: args.device = 'cpu'
+
     args.container_size = givenData.container_size
     args.item_size_set  = givenData.item_size_set
 
