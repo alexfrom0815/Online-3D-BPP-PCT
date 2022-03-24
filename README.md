@@ -12,7 +12,7 @@ We propose to enhance the practical applicability of online 3D-BPP via learning 
 - [x] Better performance and the ability to account for more complex constraints.
 - [x] More adequate heuristic baselines for domain development.
 - [x] More stable training.
-- [x] No need to manually register gym anymore.
+
 
 If you are interested, please star this repo!
 
