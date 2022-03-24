@@ -2,8 +2,6 @@
 
 **This repository is fully published now, all kinds of feedback and any contribution is welcome!** 
 
-**I am also looking for high-quality academic cooperation.** If you are interested or have any problems, please contact me at alexfrom0815@gmail.com.
-
 We propose to enhance the practical applicability of online 3D-BPP via learning on a hierarchical packing configuration tree which makes the DRL model easy to deal with practical constraints and well-performing even with continuous solution space.
  Compared to our previous work, the advantages of this repo are:
 - [x] Container (bin) size and item sizes can be set arbitrarily.
