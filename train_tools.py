@@ -15,7 +15,6 @@ class train_tools(object):
         self.writer = writer
         self.timeStr = timeStr
         self.step_counter = 0
-        self.step_counter = 0
         self.PCT_policy = PCT_policy
         self.use_acktr = args.use_acktr
         seed = args.seed
