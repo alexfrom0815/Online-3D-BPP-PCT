@@ -254,8 +254,8 @@ def heightmap_min(env, times = 2000):
             next_box = env.next_box
             next_den = env.next_den
 
-            for lx in range(bin_size[0] - next_box[0]):
-                for ly in range(bin_size[1] - next_box[1]):
+            for lx in range(bin_size[0] - next_box[0] + 1):
+                for ly in range(bin_size[1] - next_box[1] + 1):
                     # Find the most suitable placement within the allowed orientation.
                     for rot in range(env.orientation):
                         if rot == 0:
@@ -321,8 +321,8 @@ def random(env, times = 2000):
 
             # Check the feasibility of all placements.
             candidates = []
-            for lx in range(bin_size[0] - next_box[0]):
-                for ly in range(bin_size[1] - next_box[1]):
+            for lx in range(bin_size[0] - next_box[0] + 1):
+                for ly in range(bin_size[1] - next_box[1] + 1):
                     for rot in range(env.orientation):
                         if rot == 0:
                             x, y, z = next_box
@@ -453,8 +453,8 @@ def DBL(env, times = 2000):
             next_box = env.next_box
             next_den = env.next_den
 
-            for lx in range(bin_size[0] - next_box[0]):
-                for ly in range(bin_size[1] - next_box[1]):
+            for lx in range(bin_size[0] - next_box[0] + 1):
+                for ly in range(bin_size[1] - next_box[1] + 1):
                     # Find the most suitable placement within the allowed orientation.
                     for rot in range(env.orientation):
                         if rot == 0:
