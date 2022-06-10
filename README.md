@@ -11,10 +11,10 @@ We propose to enhance the practical applicability of online 3D bin packing probl
 - [x] More adequate heuristic baselines for domain development.
 - [x] More stable training.
 
+See these links for video demonstration: [YouTube](https://www.youtube.com/watch?v=duWgTskKwws), [bilibili](https://www.bilibili.com/video/BV1rU4y1R74S/?vd_source=b1e4277847248c95062cf16ab3b58e73)
 
 If you are interested, please star this repo! 
 
-See these links for video demonstration: [YouTube](https://www.youtube.com/watch?v=duWgTskKwws), [bilibili](https://www.bilibili.com/video/BV1rU4y1R74S/?vd_source=b1e4277847248c95062cf16ab3b58e73)
 
 ![PCT](images/packingtree2D.png)
 
