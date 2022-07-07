@@ -38,7 +38,7 @@ url={https://openreview.net/forum?id=bfuGjlCwAq}
 * gym
 * Python>=3.7
 * [PyTorch](http://pytorch.org/) >=1.7
-* My suggestion: Python == 3.7, torch == 1.10, OS: Ubuntu 16.04
+* My suggestion: Python == 3.7, gym==0.13.0, torch == 1.10, OS: Ubuntu 16.04
 ## Quick start
 
 For training online 3D-BPP on setting 2 (mentioned in our paper) with our PCT method and the default arguments:
