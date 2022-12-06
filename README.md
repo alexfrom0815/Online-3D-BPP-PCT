@@ -1,7 +1,5 @@
 # Learning Efficient Online 3D Bin Packing on Packing Configuration Trees 
 
-**This repository is fully published now, all kinds of feedback and any contribution is welcome!** 
-
 We propose to enhance the practical applicability of online 3D bin packing problem (BPP) via learning on a hierarchical packing configuration tree which makes the deep reinforcement learning (DRL) model easy to deal with practical constraints and well-performing even with continuous solution space.
  Compared to our previous work, the advantages of this repo are:
 - [x] Container (bin) size and item sizes can be set arbitrarily.
