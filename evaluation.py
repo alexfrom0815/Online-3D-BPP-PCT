@@ -19,7 +19,6 @@ def main(args):
         device = torch.device('cuda', args.device)
         torch.cuda.set_device(args.device)
 
-    torch.cuda.set_device(args.device)
     torch.set_num_threads(1)
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
