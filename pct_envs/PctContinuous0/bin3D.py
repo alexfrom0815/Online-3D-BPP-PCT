@@ -79,7 +79,6 @@ class PackingContinuous(gym.Env):
         boxes = []
         leaf_nodes = []
         self.next_box = self.gen_next_box()
-
         if self.test:
             if self.setting == 3: self.next_den = self.next_box[3]
             else: self.next_den = 1
