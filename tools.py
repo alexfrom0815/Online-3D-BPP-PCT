@@ -153,7 +153,7 @@ def get_args():
     parser.add_argument('--gamma', type=float, default=1.0, metavar='γ', help='Discount factor')
 
     parser.add_argument('--model-save-interval',    type=int,   default=200   , help='How often to save the model')
-    parser.add_argument('--model-update-interval',  type=int,   default=20e30 , help='How often to create a new model')
+    parser.add_argument('--model-update-interval',  type=int,   default=20e3 , help='How often to create a new model')
     parser.add_argument('--model-save-path',type=str, default='./logs/experiment', help='The path to save the trained model')
     parser.add_argument('--print-log-interval',     type=int,   default=10, help='How often to print training logs')
 
