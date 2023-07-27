@@ -156,11 +156,11 @@ class PackingContinuous(gym.Env):
         for r in record:
             if abs(x - self.next_box[r]) < 1e-6:
                 record.remove(r)
-            break
+                break
         for r in record:
             if abs(y - self.next_box[r]) < 1e-6:
                 record.remove(r)
-            break
+                break
         z = self.next_box[record[0]]
         action = (0, leaf_node[0], leaf_node[1])
         next_box = (x, y, z)

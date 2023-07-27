@@ -3,7 +3,7 @@
 We propose to enhance the practical applicability of online 3D bin packing problem (BPP) via learning on a hierarchical packing configuration tree which makes the deep reinforcement learning (DRL) model easy to deal with practical constraints and well-performing even with continuous solution space.
  Compared to our previous work, the advantages of this repo are:
 - [x] Container (bin) size and item sizes can be set arbitrarily.
-- [x] Continuous online 3D-BPP is allowed and the continuous environment is provided.
+- [x] Continuous online 3D-BPP is allowed and a continuous environment is provided.
 - [x] Algorithms to approximate stability are provided ([see our other work](https://arxiv.org/abs/2108.13680v2)). 
 - [x] Better performance and the ability to account for more complex constraints.
 - [x] More adequate heuristic baselines for domain development.
@@ -51,7 +51,7 @@ The training data is generated on the fly. The training logs (tensorboard) are s
 
 Describe your 3D container size and 3D item size in 'givenData.py'
 ```
-container_size: A vector of length 3 describing the size of the container in the x, y, z dimension.
+container_size: A vector of length 3 describing the size of the container in the x, y, z dimensions.
 item_size_set:  A list records the size of each item. The size of each item is also described by a vector of length 3.
 ```
 ### Dataset
@@ -67,12 +67,12 @@ For training online 3D BPP instances on setting 1 (80 internal nodes and 50 leaf
 ```bash
 python main.py --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
-If you want to train a model that works on the **continuous** domain, add '--continuous', don't forget to change your problem in 'givenData.py':
+If you want to train a model that works on the **continuous** domain, add '--continuous', and don't forget to change your problem in 'givenData.py':
 ```bash
 python main.py --continuous --sample-from-distribution --setting 1 --internal-node-holder 80 --leaf-node-holder 50
 ```
 #### Warm start
-You can initialize a run using a pretrained model:
+You can initialize a run using a pre-trained model:
 ```bash
 python main.py --load-model --model-path path/to/your/model
 ```
@@ -85,7 +85,7 @@ python evaluation.py --evaluate --load-model --model-path path/to/your/model --l
 ### Heuristic
 Running heuristic.py for test heuristic baselines, the source of the heuristic algorithm has been marked in the code:
 
-Running heuristic on setting 1 （discrete） with LASH method:
+Running heuristic on setting 1 （discrete） with the LASH method:
 ```
 python heuristic.py --setting 1 --heuristic LSAH --load-dataset  --dataset-path setting123_discrete.pt
 ```
@@ -104,5 +104,5 @@ python heuristic.py -h
 
 ### License
 ```
-This source code is released only for academic use. Please do not use it for commercial purpose without authorization of the author.
+This source code is released only for academic use. Please do not use it for commercial purposes without authorization of the author.
 ```
