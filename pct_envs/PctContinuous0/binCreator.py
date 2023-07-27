@@ -33,7 +33,6 @@ class RandomBoxCreator(BoxCreator):
         self.box_set = box_size_set
         if self.box_set is None:
             self.box_set = RandomBoxCreator.default_box_set
-        print(self.box_set)
 
     def generate_box_size(self, **kwargs):
         idx = np.random.randint(0, len(self.box_set))
