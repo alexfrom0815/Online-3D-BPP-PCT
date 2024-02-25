@@ -35,8 +35,8 @@ class PCTRolloutStorage(object):
         self.actions[self.step].copy_(actions)
         self.action_log_probs[self.step].copy_(action_log_probs)
         self.rewards[self.step].copy_(rewards)
-        self.step = (self.step + 1) % self.num_steps
         self.masks[self.step + 1].copy_(masks)
+        self.step = (self.step + 1) % self.num_steps
 
     def after_update(self):
         self.obs[0].copy_(self.obs[-1])
