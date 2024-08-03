@@ -1,8 +1,8 @@
 # container_size: A vector of length 3 describing the size of the container in the x, y, z dimension.
 # item_size_set:  A list records the size of each item. The size of each item is also described by a vector of length 3.
 
-# container_size = [10,10,10]
-container_size = [1,1,1]
+container_size = [10,10,10]
+# container_size = [1,1,1]
 
 lower = 1
 higher = 5
