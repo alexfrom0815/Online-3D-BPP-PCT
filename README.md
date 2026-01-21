@@ -119,8 +119,3 @@ python main.py -h
 python evaluation.py -h
 python heuristic.py -h
 ```
-
-### License
-```
-This source code is released only for academic use. Please do not use it for commercial purposes without authorization of the author.
-```
